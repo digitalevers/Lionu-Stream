@@ -1,0 +1,103 @@
+[debug] > Exec(early(addDefaultCommands), None, None)
+[debug] > Exec(addDefaultCommands, None, None)
+[debug] > Exec(early(initialize), None, None)
+[debug] > Exec(initialize, None, None)
+[debug] > Exec(early(addPluginSbtFile="""C:\Users\Administrator\AppData\Local\Temp\idea.sbt"""), None, None)
+[debug] > Exec(addPluginSbtFile="""C:\Users\Administrator\AppData\Local\Temp\idea.sbt""", None, None)
+[debug] > Exec(boot, None, None)
+[debug] > Exec(writeSbtVersion, None, None)
+[debug] > Exec(reload, None, None)
+[debug] > Exec(sbtStashOnFailure, None, None)
+[debug] > Exec(onFailure loadFailed, None, None)
+[debug] > Exec(loadp, None, None)
+[info] welcome to sbt 1.4.2 (Oracle Corporation Java 1.8.0_201)
+[debug]       Load.loadUnit: plugins took 108.070493ms
+[debug]       Load.loadUnit: defsScala took 0.399025ms
+[debug] [Loading] Scanning directory C:\Users\Administrator\.sbt\1.0\plugins
+[debug] [Loading] Found non-root projects 
+[debug] [Loading] Done in C:\Users\Administrator\.sbt\1.0\plugins, returning: ()
+[debug] deducing auto plugins based on known facts Set(Atom(sbt.plugins.CorePlugin)) and clauses Clauses(List(Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.IvyPlugin))), Clause(Atom(sbt.ScriptedPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.SbtPlugin),Set(Atom(sbt.ScriptedPlugin))), Clause(Atom(sbt.plugins.SemanticdbPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.JUnitXmlReportPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.MiniDependencyTreePlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.IvyPlugin))), Clause(Atom(sbt.plugins.IvyPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.SemanticdbPlugin))), Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.JUnitXmlReportPlugin))), Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.Giter8TemplatePlugin))), Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.MiniDependencyTreePlugin)))))
+[debug]   :: deduced result: Matched(sbt.plugins.CorePlugin,sbt.plugins.Giter8TemplatePlugin,sbt.plugins.IvyPlugin,sbt.plugins.JvmPlugin,sbt.plugins.MiniDependencyTreePlugin,sbt.plugins.JUnitXmlReportPlugin,sbt.plugins.SemanticdbPlugin)
+[debug] Plugins.deducer#function took 18.459048 ms
+[debug]           Load.resolveProject(global-plugins) took 45.080051ms
+[debug]         Load.loadTransitive: finalizeProject(Project(id global-plugins, base: C:\Users\Administrator\.sbt\1.0\plugins, plugins: List(<none>))) took 88.753904ms
+[debug] [Loading] Done in C:\Users\Administrator\.sbt\1.0\plugins, returning: (global-plugins)
+[debug]       Load.loadUnit: loadedProjectsRaw took 109.235413ms
+[debug]       Load.loadUnit: cleanEvalClasses took 0.766798ms
+[debug]     Load.loadUnit(file:/C:/Users/Administrator/.sbt/1.0/plugins/, ...) took 228.636914ms
+[debug]   Load.apply: load took 513.253712ms
+[debug]   Load.apply: resolveProjects took 5.305691ms
+[debug]   Load.apply: finalTransforms took 52.159414ms
+[debug]   Load.apply: config.delegates took 8.551966ms
+[debug]   Load.apply: Def.make(settings)... took 1097.876461ms
+[debug]   Load.apply: structureIndex took 213.146204ms
+[debug]   Load.apply: mkStreams took 2.486387ms
+[info] loading global plugins from C:\Users\Administrator\.sbt\1.0\plugins
+[debug] Running task... Cancel: Signal, check cycles: false, forcegc: true
+[debug] Load.defaultLoad until apply took 3722.336067ms
+[debug]           Load.loadUnit: plugins took 33.135183ms
+[debug]           Load.loadUnit: defsScala took 0.004508ms
+[debug] [Loading] Scanning directory C:\Users\Administrator\IdeaProjects\zookeeper\project
+[debug]             Load.loadUnit: mkEval took 9.693148ms
+[debug] [Loading] Found non-root projects 
+[debug] [Loading] Done in C:\Users\Administrator\IdeaProjects\zookeeper\project, returning: ()
+[debug] deducing auto plugins based on known facts Set(Atom(sbt.plugins.CorePlugin)) and clauses Clauses(List(Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.IvyPlugin))), Clause(Atom(sbt.ScriptedPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.SbtPlugin),Set(Atom(sbt.ScriptedPlugin))), Clause(Atom(sbt.plugins.SemanticdbPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.JUnitXmlReportPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.MiniDependencyTreePlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.IvyPlugin))), Clause(Atom(sbt.plugins.IvyPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.SemanticdbPlugin))), Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.JUnitXmlReportPlugin))), Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.Giter8TemplatePlugin))), Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.MiniDependencyTreePlugin)))))
+[debug]   :: deduced result: Matched(sbt.plugins.CorePlugin,sbt.plugins.Giter8TemplatePlugin,sbt.plugins.IvyPlugin,sbt.plugins.JvmPlugin,sbt.plugins.MiniDependencyTreePlugin,sbt.plugins.JUnitXmlReportPlugin,sbt.plugins.SemanticdbPlugin)
+[debug] Plugins.deducer#function took 1.89446 ms
+[info] loading settings for project zookeeper-build from idea.sbt ...
+[debug]               Load.resolveProject(zookeeper-build) took 3.500771ms
+[debug]             Load.loadTransitive: finalizeProject(Project(id zookeeper-build, base: C:\Users\Administrator\IdeaProjects\zookeeper\project, plugins: List(<none>))) took 6.091119ms
+[debug] [Loading] Done in C:\Users\Administrator\IdeaProjects\zookeeper\project, returning: (zookeeper-build)
+[debug]           Load.loadUnit: loadedProjectsRaw took 137.794746ms
+[debug]           Load.loadUnit: cleanEvalClasses took 6.369955ms
+[debug]         Load.loadUnit(file:/C:/Users/Administrator/IdeaProjects/zookeeper/project/, ...) took 178.571172ms
+[debug]       Load.apply: load took 179.60749ms
+[debug]       Load.apply: resolveProjects took 0.161353ms
+[debug]       Load.apply: finalTransforms took 10.092472ms
+[debug]       Load.apply: config.delegates took 0.327812ms
+[debug]       Load.apply: Def.make(settings)... took 78.420155ms
+[debug]       Load.apply: structureIndex took 22.736532ms
+[debug]       Load.apply: mkStreams took 0.002705ms
+[info] loading project definition from C:\Users\Administrator\IdeaProjects\zookeeper\project
+[debug] Running task... Cancel: Signal, check cycles: false, forcegc: true
+[debug]     Load.loadUnit: plugins took 573.127383ms
+[debug]     Load.loadUnit: defsScala took 0.004508ms
+[debug] [Loading] Scanning directory C:\Users\Administrator\IdeaProjects\zookeeper
+[debug]       Load.loadUnit: mkEval took 0.323005ms
+[debug] [Loading] Found non-root projects 
+[debug] [Loading] Done in C:\Users\Administrator\IdeaProjects\zookeeper, returning: ()
+[debug] deducing auto plugins based on known facts Set(Atom(sbt.plugins.CorePlugin)) and clauses Clauses(List(Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.IvyPlugin))), Clause(Atom(sbt.ScriptedPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.SbtPlugin),Set(Atom(sbt.ScriptedPlugin))), Clause(Atom(sbt.plugins.SemanticdbPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.JUnitXmlReportPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.MiniDependencyTreePlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(org.jetbrains.sbt.StructurePlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(org.jetbrains.sbt.IdeaShellPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(org.jetbrains.sbt.indices.SbtIntellijIndicesPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.IvyPlugin))), Clause(Atom(sbt.plugins.IvyPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.SemanticdbPlugin))), Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.JUnitXmlReportPlugin))), Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.Giter8TemplatePlugin))), Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.MiniDependencyTreePlugin))), Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(org.jetbrains.sbt.StructurePlugin))), Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(org.jetbrains.sbt.IdeaShellPlugin))), Clause(And(Set(Atom(sbt.plugins.CorePlugin), Atom(sbt.plugins.JvmPlugin))),Set(Atom(org.jetbrains.sbt.indices.SbtIntellijIndicesPlugin)))))
+[debug]   :: deduced result: Matched(sbt.plugins.CorePlugin,sbt.plugins.Giter8TemplatePlugin,sbt.plugins.IvyPlugin,sbt.plugins.JvmPlugin,sbt.plugins.SemanticdbPlugin,org.jetbrains.sbt.indices.SbtIntellijIndicesPlugin,sbt.plugins.JUnitXmlReportPlugin,org.jetbrains.sbt.IdeaShellPlugin,org.jetbrains.sbt.StructurePlugin,sbt.plugins.MiniDependencyTreePlugin)
+[debug] Plugins.deducer#function took 2.790763 ms
+[info] loading settings for project zookeeper from build.sbt ...
+[debug]         Load.resolveProject(zookeeper) took 38.226941ms
+[debug]       Load.loadTransitive: finalizeProject(Project(id zookeeper, base: C:\Users\Administrator\IdeaProjects\zookeeper, plugins: List(<none>))) took 42.422999ms
+[debug] [Loading] Done in C:\Users\Administrator\IdeaProjects\zookeeper, returning: (zookeeper)
+[debug]     Load.loadUnit: loadedProjectsRaw took 62.933652ms
+[debug]     Load.loadUnit: cleanEvalClasses took 8.464528ms
+[debug]   Load.loadUnit(file:/C:/Users/Administrator/IdeaProjects/zookeeper/, ...) took 645.243688ms
+[debug] Load.apply: load took 646.437753ms
+[debug] Load.apply: resolveProjects took 0.100056ms
+[debug] Load.apply: finalTransforms took 19.342729ms
+[debug] Load.apply: config.delegates took 0.320902ms
+[debug] Load.apply: Def.make(settings)... took 60.221614ms
+[debug] Load.apply: structureIndex took 22.396401ms
+[debug] Load.apply: mkStreams took 0.001803ms
+[info] set current project to zookeeper (in build file:/C:/Users/Administrator/IdeaProjects/zookeeper/)
+[debug] > Exec(sbtPopOnFailure, None, None)
+[debug] > Exec(resumeFromFailure, None, None)
+[debug] > Exec(notifyUsersAboutShell, None, None)
+[debug] > Exec(iflast shell, None, None)
+[debug] > Exec(; set ideaPort in Global := 53288 ; idea-shell, None, None)
+[debug] > Exec(set ideaPort in Global := 53288, None, None)
+[info] Defining Global / ideaPort
+[info] The new value will be used by Compile / compile, Test / compile
+[debug] Defining 
+[debug] 	Global / ideaPort
+[debug] 
+[debug] The new value will be used by 
+[debug] 	Compile / compile
+[debug] 	Test / compile
+[info] Reapplying settings...
+[info] set current project to zookeeper (in build file:/C:/Users/Administrator/IdeaProjects/zookeeper/)
+[debug] > Exec(idea-shell, None, None)

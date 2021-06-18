@@ -1,0 +1,88 @@
+[debug] > Exec(early(addDefaultCommands), None, None)
+[debug] > Exec(addDefaultCommands, None, None)
+[debug] > Exec(early(initialize), None, None)
+[debug] > Exec(initialize, None, None)
+[debug] > Exec(boot, None, None)
+[debug] > Exec(writeSbtVersion, None, None)
+[debug] > Exec(reload, None, None)
+[debug] > Exec(sbtStashOnFailure, None, None)
+[debug] > Exec(onFailure loadFailed, None, None)
+[debug] > Exec(loadp, None, None)
+[info] welcome to sbt 1.4.2 (Oracle Corporation Java 1.8.0_201)
+[debug]       Load.loadUnit: plugins took 94.333925ms
+[debug]       Load.loadUnit: defsScala took 0.271324ms
+[debug] [Loading] Scanning directory C:\Users\Administrator\.sbt\1.0\plugins
+[debug] [Loading] Found non-root projects 
+[debug] [Loading] Done in C:\Users\Administrator\.sbt\1.0\plugins, returning: ()
+[debug] deducing auto plugins based on known facts Set(Atom(sbt.plugins.CorePlugin)) and clauses Clauses(List(Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.IvyPlugin))), Clause(Atom(sbt.ScriptedPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.SbtPlugin),Set(Atom(sbt.ScriptedPlugin))), Clause(Atom(sbt.plugins.SemanticdbPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.JUnitXmlReportPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.MiniDependencyTreePlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.IvyPlugin))), Clause(Atom(sbt.plugins.IvyPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.SemanticdbPlugin))), Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.JUnitXmlReportPlugin))), Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.Giter8TemplatePlugin))), Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.MiniDependencyTreePlugin)))))
+[debug]   :: deduced result: Matched(sbt.plugins.CorePlugin,sbt.plugins.Giter8TemplatePlugin,sbt.plugins.IvyPlugin,sbt.plugins.JvmPlugin,sbt.plugins.MiniDependencyTreePlugin,sbt.plugins.JUnitXmlReportPlugin,sbt.plugins.SemanticdbPlugin)
+[debug] Plugins.deducer#function took 20.928607 ms
+[debug]           Load.resolveProject(global-plugins) took 43.263412ms
+[debug]         Load.loadTransitive: finalizeProject(Project(id global-plugins, base: C:\Users\Administrator\.sbt\1.0\plugins, plugins: List(<none>))) took 87.963369ms
+[debug] [Loading] Done in C:\Users\Administrator\.sbt\1.0\plugins, returning: (global-plugins)
+[debug]       Load.loadUnit: loadedProjectsRaw took 107.579526ms
+[debug]       Load.loadUnit: cleanEvalClasses took 0.22986ms
+[debug]     Load.loadUnit(file:/C:/Users/Administrator/.sbt/1.0/plugins/, ...) took 209.603369ms
+[debug]   Load.apply: load took 461.767951ms
+[debug]   Load.apply: resolveProjects took 6.490444ms
+[debug]   Load.apply: finalTransforms took 66.43863ms
+[debug]   Load.apply: config.delegates took 11.213825ms
+[debug]   Load.apply: Def.make(settings)... took 925.289141ms
+[debug]   Load.apply: structureIndex took 98.416105ms
+[debug]   Load.apply: mkStreams took 1.90047ms
+[info] loading global plugins from C:\Users\Administrator\.sbt\1.0\plugins
+[debug] Running task... Cancel: Signal, check cycles: false, forcegc: true
+[debug] Load.defaultLoad until apply took 3241.246119ms
+[debug]           Load.loadUnit: plugins took 26.788064ms
+[debug]           Load.loadUnit: defsScala took 0.003305ms
+[debug] [Loading] Scanning directory C:\Users\Administrator\IdeaProjects\zookeeper\project
+[debug] [Loading] Found non-root projects 
+[debug] [Loading] Done in C:\Users\Administrator\IdeaProjects\zookeeper\project, returning: ()
+[debug] deducing auto plugins based on known facts Set(Atom(sbt.plugins.CorePlugin)) and clauses Clauses(List(Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.IvyPlugin))), Clause(Atom(sbt.ScriptedPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.SbtPlugin),Set(Atom(sbt.ScriptedPlugin))), Clause(Atom(sbt.plugins.SemanticdbPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.JUnitXmlReportPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.MiniDependencyTreePlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.IvyPlugin))), Clause(Atom(sbt.plugins.IvyPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.SemanticdbPlugin))), Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.JUnitXmlReportPlugin))), Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.Giter8TemplatePlugin))), Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.MiniDependencyTreePlugin)))))
+[debug]   :: deduced result: Matched(sbt.plugins.CorePlugin,sbt.plugins.Giter8TemplatePlugin,sbt.plugins.IvyPlugin,sbt.plugins.JvmPlugin,sbt.plugins.MiniDependencyTreePlugin,sbt.plugins.JUnitXmlReportPlugin,sbt.plugins.SemanticdbPlugin)
+[debug] Plugins.deducer#function took 1.875832 ms
+[debug]               Load.resolveProject(zookeeper-build) took 1.486422ms
+[debug]             Load.loadTransitive: finalizeProject(Project(id zookeeper-build, base: C:\Users\Administrator\IdeaProjects\zookeeper\project, plugins: List(<none>))) took 3.910011ms
+[debug] [Loading] Done in C:\Users\Administrator\IdeaProjects\zookeeper\project, returning: (zookeeper-build)
+[debug]           Load.loadUnit: loadedProjectsRaw took 5.679175ms
+[debug]           Load.loadUnit: cleanEvalClasses took 0.009915ms
+[debug]         Load.loadUnit(file:/C:/Users/Administrator/IdeaProjects/zookeeper/project/, ...) took 33.588592ms
+[debug]       Load.apply: load took 34.714451ms
+[debug]       Load.apply: resolveProjects took 0.099155ms
+[debug]       Load.apply: finalTransforms took 8.469937ms
+[debug]       Load.apply: config.delegates took 0.408338ms
+[debug]       Load.apply: Def.make(settings)... took 82.292907ms
+[debug]       Load.apply: structureIndex took 26.905248ms
+[debug]       Load.apply: mkStreams took 0.001802ms
+[info] loading project definition from C:\Users\Administrator\IdeaProjects\zookeeper\project
+[debug] Running task... Cancel: Signal, check cycles: false, forcegc: true
+[debug]     Load.loadUnit: plugins took 370.741295ms
+[debug]     Load.loadUnit: defsScala took 0.004808ms
+[debug] [Loading] Scanning directory C:\Users\Administrator\IdeaProjects\zookeeper
+[debug]       Load.loadUnit: mkEval took 7.449542ms
+[debug] [Loading] Found non-root projects 
+[debug] [Loading] Done in C:\Users\Administrator\IdeaProjects\zookeeper, returning: ()
+[debug] deducing auto plugins based on known facts Set(Atom(sbt.plugins.CorePlugin)) and clauses Clauses(List(Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.IvyPlugin))), Clause(Atom(sbt.ScriptedPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.SbtPlugin),Set(Atom(sbt.ScriptedPlugin))), Clause(Atom(sbt.plugins.SemanticdbPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.JUnitXmlReportPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.MiniDependencyTreePlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.IvyPlugin))), Clause(Atom(sbt.plugins.IvyPlugin),Set(Atom(sbt.plugins.JvmPlugin))), Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.SemanticdbPlugin))), Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.JUnitXmlReportPlugin))), Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.Giter8TemplatePlugin))), Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.MiniDependencyTreePlugin)))))
+[debug]   :: deduced result: Matched(sbt.plugins.CorePlugin,sbt.plugins.Giter8TemplatePlugin,sbt.plugins.IvyPlugin,sbt.plugins.JvmPlugin,sbt.plugins.MiniDependencyTreePlugin,sbt.plugins.JUnitXmlReportPlugin,sbt.plugins.SemanticdbPlugin)
+[debug] Plugins.deducer#function took 1.679325 ms
+[info] loading settings for project zookeeper from build.sbt ...
+[debug]         Load.resolveProject(zookeeper) took 3.126987ms
+[debug]       Load.loadTransitive: finalizeProject(Project(id zookeeper, base: C:\Users\Administrator\IdeaProjects\zookeeper, plugins: List(<none>))) took 6.428847ms
+[debug] [Loading] Done in C:\Users\Administrator\IdeaProjects\zookeeper, returning: (zookeeper)
+[debug]     Load.loadUnit: loadedProjectsRaw took 105.457308ms
+[debug]     Load.loadUnit: cleanEvalClasses took 6.178256ms
+[debug]   Load.loadUnit(file:/C:/Users/Administrator/IdeaProjects/zookeeper/, ...) took 483.380728ms
+[debug] Load.apply: load took 485.386662ms
+[debug] Load.apply: resolveProjects took 0.182084ms
+[debug] Load.apply: finalTransforms took 8.654726ms
+[debug] Load.apply: config.delegates took 0.438084ms
+[debug] Load.apply: Def.make(settings)... took 85.601978ms
+[debug] Load.apply: structureIndex took 21.99257ms
+[debug] Load.apply: mkStreams took 0.003305ms
+[info] set current project to zookeeper (in build file:/C:/Users/Administrator/IdeaProjects/zookeeper/)
+[debug] > Exec(sbtPopOnFailure, None, None)
+[debug] > Exec(resumeFromFailure, None, None)
+[debug] > Exec(notifyUsersAboutShell, None, None)
+[debug] > Exec(iflast shell, None, None)
+[debug] > Exec(shell, None, None)
+[info] sbt server started at local:sbt-server-77d0b77395c48c5b4494
