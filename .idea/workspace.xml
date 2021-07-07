@@ -11,8 +11,6 @@
   <component name="ChangeListManager">
     <list default="true" id="5fd991a7-32aa-467f-82ea-0f3ccfe3a8ee" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dbnavigator.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dbnavigator.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -58,7 +56,7 @@
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
-    <property name="AnalyzeApkAction.lastApkPath" value="$PROJECT_DIR$/../../../../../demo.apk" />
+    <property name="AnalyzeApkAction.lastApkPath" value="$USER_HOME$/../../../demo.apk" />
     <property name="Downloaded.Files.Path.Enabled" value="false" />
     <property name="Repository.Attach.Annotations" value="false" />
     <property name="Repository.Attach.JavaDocs" value="false" />
@@ -68,7 +66,7 @@
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="project.structure.last.edited" value="Modules" />
     <property name="project.structure.proportion" value="0.13085938" />
-    <property name="project.structure.side.proportion" value="0.43794465" />
+    <property name="project.structure.side.proportion" value="0.23761609" />
     <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
   <component name="RecentsManager">
@@ -83,56 +81,17 @@
       <recent name="C:\Users\Administrator\IdeaProjects\zookeeper\src\main\scala" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.sparkSteamReConsitution">
-    <configuration name="advClickDataSender" type="Application" factoryName="Application" temporary="true">
-      <option name="MAIN_CLASS_NAME" value="advClickDataSender" />
-      <module name="zookeeper" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="payDataSender" type="Application" factoryName="Application" temporary="true">
-      <option name="MAIN_CLASS_NAME" value="payDataSender" />
-      <module name="zookeeper" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="redisUtilTest" type="Application" factoryName="Application" temporary="true">
-      <option name="MAIN_CLASS_NAME" value="redisUtilTest" />
-      <module name="zookeeper" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="sparkSteam" type="Application" factoryName="Application" temporary="true">
-      <option name="MAIN_CLASS_NAME" value="sparkSteam" />
-      <module name="zookeeper" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="sparkSteamReConsitution" type="Application" factoryName="Application" temporary="true">
+  <component name="RunManager">
+    <configuration name="sparkSteamReConsitution" type="Application" factoryName="Application" activateToolWindowBeforeRun="false" temporary="true">
       <option name="MAIN_CLASS_NAME" value="sparkSteamReConsitution" />
-      <module name="zookeeper" />
+      <module name="Lionsu-stream" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <list>
-      <item itemvalue="Application.advClickDataSender" />
-      <item itemvalue="Application.sparkSteam" />
-      <item itemvalue="Application.redisUtilTest" />
-      <item itemvalue="Application.payDataSender" />
-      <item itemvalue="Application.sparkSteamReConsitution" />
-    </list>
     <recent_temporary>
       <list>
         <item itemvalue="Application.sparkSteamReConsitution" />
-        <item itemvalue="Application.payDataSender" />
-        <item itemvalue="Application.advClickDataSender" />
-        <item itemvalue="Application.sparkSteam" />
-        <item itemvalue="Application.redisUtilTest" />
       </list>
     </recent_temporary>
   </component>
