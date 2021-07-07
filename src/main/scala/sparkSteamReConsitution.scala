@@ -144,17 +144,17 @@ object sparkSteamReConsitution {
   private def handleNewLaunchConsumerRecord(deviceMap:Map[String,String],prop:Properties) = {
     //查找条件优先级 imei->oaid->android_id->mac->ip
     val sqls = mutable.LinkedHashMap[String,String](
-      "imei"->"SELECT  * FROM test.datadvs_android_click_log WHERE imei_md5=?",
-      "oaid"->"SELECT  * FROM test.datadvs_android_click_log WHERE oaid=?",
-      "androidid"->"SELECT  * FROM test.datadvs_android_click_log WHERE androidid_md5=?",
-      "mac"->"SELECT  * FROM test.datadvs_android_click_log WHERE mac_md5=?",
-      "ip"->"SELECT  * FROM test.datadvs_android_click_log WHERE ip=?"
+      "imei"->"SELECT  * FROM log_android_click_data WHERE imei_md5=?",
+      "oaid"->"SELECT  * FROM log_android_click_data WHERE oaid=?",
+      "androidid"->"SELECT  * FROM log_android_click_data WHERE androidid_md5=?",
+      "mac"->"SELECT  * FROM log_android_click_data WHERE mac_md5=?",
+      "ip"->"SELECT  * FROM log_android_click_data WHERE ip=?"
     )
     ////////////////新设备
     val advAscribeInfo:mutable.Map[String,String] = mutable.Map[String,String](deviceMap.toSeq:_*)    //immutable.map 转 mutable.map
     advAscribeInfo += ("plan_id"->"0","channel_id"->"0")
 
-    val connection: Connection = DriverManager.getConnection(prop.getProperty("clickhouse.jdbc"), "default", "")
+    val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.jdbc"), "default", "")
     //查找7天内的clickhouse数据进行归因
     val loop = new Breaks;
     loop.breakable {
@@ -353,8 +353,6 @@ object sparkSteamReConsitution {
     Try {
       val connection = DriverManager.getConnection(prop.getProperty("mysql.jdbc"), "root", "")
       try {
-        //val connection = DriverManager.getConnection(prop.getProperty("mysql.jdbc"), "root", "")
-
         //println(data)
         //TODO 批量写入和更新基础统计数据
         val planExistSql = "SELECT * FROM test.statistics_data WHERE plan_id=? AND stat_date=?"
