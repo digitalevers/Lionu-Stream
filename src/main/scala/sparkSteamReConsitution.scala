@@ -154,7 +154,7 @@ object sparkSteamReConsitution {
     val advAscribeInfo:mutable.Map[String,String] = mutable.Map[String,String](deviceMap.toSeq:_*)    //immutable.map 转 mutable.map
     advAscribeInfo += ("plan_id"->"0","channel_id"->"0")
 
-    val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.jdbc"), "default", "")
+    val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.jdbc"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
     //查找7天内的clickhouse数据进行归因
     val loop = new Breaks;
     loop.breakable {
@@ -179,7 +179,7 @@ object sparkSteamReConsitution {
       }
     }
     //写入激活表
-    val activeSql = "INSERT INTO test.datadvs_android_active(appid, imei_md5, oaid, androidid_md5, mac_md5, ip, plan_id, channel_id, active_time) VALUES(?,?,?,?,?,?,?,?,?)"
+    val activeSql = "INSERT INTO log_android_active(appid, imei_md5, oaid, androidid_md5, mac_md5, ip, plan_id, channel_id, active_time) VALUES(?,?,?,?,?,?,?,?,?)"
     val activePrep = connection.prepareStatement(activeSql)
     activePrep.setString(1,advAscribeInfo("appid"))
     activePrep.setString(2,advAscribeInfo("imei"))
@@ -192,7 +192,7 @@ object sparkSteamReConsitution {
     activePrep.setString(9,NOW)
     activePrep.executeQuery
     //写入启动表
-    val launchLogSql = "INSERT INTO test.datadvs_android_launch_log(appid, imei_md5, oaid, androidid_md5, mac_md5, ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
+    val launchLogSql = "INSERT INTO log_android_launch(appid, imei_md5, oaid, androidid_md5, mac_md5, ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
     val launchLogPrep = connection.prepareStatement(launchLogSql)
     launchLogPrep.setString(1,advAscribeInfo("appid"))
     launchLogPrep.setString(2,advAscribeInfo("imei"))
@@ -218,8 +218,8 @@ object sparkSteamReConsitution {
     val advAscribeInfo:mutable.Map[String,String] = mutable.Map[String,String](deviceMap.toSeq:_*)
     advAscribeInfo += ("plan_id"->"0","channel_id"->"0")
 
-    val connection: Connection = DriverManager.getConnection(prop.getProperty("clickhouse.jdbc"), "default", "")
-    val sql = "SELECT * FROM test.datadvs_android_active WHERE appid=? AND imei_md5=?"
+    val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.jdbc"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
+    val sql = "SELECT * FROM log_android_active WHERE appid=? AND imei_md5=?"
     val prep = connection.prepareStatement(sql)
     prep.setString(1,deviceMap("appid"))
     prep.setString(2,deviceMap("imei"))
@@ -229,7 +229,7 @@ object sparkSteamReConsitution {
       advAscribeInfo("channel_id") = res.getString("channel_id")
     }
     //写入启动表
-    val launchLogSql = "INSERT INTO test.datadvs_android_launch_log(appid, imei_md5, oaid, androidid_md5, mac_md5, ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
+    val launchLogSql = "INSERT INTO log_android_launch(appid, imei_md5, oaid, androidid_md5, mac_md5, ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
     val launchLogPrep = connection.prepareStatement(launchLogSql)
     launchLogPrep.setString(1,advAscribeInfo("appid"))
     launchLogPrep.setString(2,advAscribeInfo("imei"))
@@ -255,18 +255,18 @@ object sparkSteamReConsitution {
   private def handleNewPayConsumerRecord(deviceMap:Map[String,String],prop:Properties) = {
     //查找条件优先级 imei->oaid->android_id->mac->ip
     val sqls = mutable.LinkedHashMap[String,String](
-      "imei"->"SELECT  * FROM test.datadvs_android_click_log WHERE imei_md5=?",
-      "oaid"->"SELECT  * FROM test.datadvs_android_click_log WHERE oaid=?",
-      "androidid"->"SELECT  * FROM test.datadvs_android_click_log WHERE androidid_md5=?",
-      "mac"->"SELECT  * FROM test.datadvs_android_click_log WHERE mac_md5=?",
-      "ip"->"SELECT  * FROM test.datadvs_android_click_log WHERE ip=?"
+      "imei"->"SELECT  * FROM log_android_click_data WHERE imei_md5=?",
+      "oaid"->"SELECT  * FROM log_android_click_data WHERE oaid=?",
+      "androidid"->"SELECT  * FROM log_android_click_data WHERE androidid_md5=?",
+      "mac"->"SELECT  * FROM log_android_click_data WHERE mac_md5=?",
+      "ip"->"SELECT  * FROM log_android_click_data WHERE ip=?"
     )
     ////////////////新设备
     val advAscribeInfo:mutable.Map[String,String] = mutable.Map[String,String](deviceMap.toSeq:_*)    //immutable.map 转 mutable.map
     advAscribeInfo += ("plan_id"->"0","channel_id"->"0")
 
-    val connection: Connection = DriverManager.getConnection(prop.getProperty("clickhouse.jdbc"), "default", "")
-    //查找7天内的clickhouse数据进行归因
+    val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.jdbc"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
+    //查找7天内的 mysql 数据进行归因
     val loop = new Breaks;
     loop.breakable {
       for ((k, sql) <- sqls) {
@@ -290,7 +290,7 @@ object sparkSteamReConsitution {
       }
     }
     //写入付费日志表
-    val activeSql = "INSERT INTO test.datadvs_android_pay_log(appid, imei_md5, oaid, androidid_md5, mac_md5, ip, plan_id, channel_id, pay_time,pay_amount) VALUES(?,?,?,?,?,?,?,?,?,?)"
+    /*val activeSql = "INSERT INTO log_android_pay(appid, imei_md5, oaid, androidid_md5, mac_md5, ip, plan_id, channel_id, pay_time,pay_amount) VALUES(?,?,?,?,?,?,?,?,?,?)"
     val activePrep = connection.prepareStatement(activeSql)
     activePrep.setString(1,advAscribeInfo("appid"))
     activePrep.setString(2,advAscribeInfo("imei"))
@@ -302,7 +302,7 @@ object sparkSteamReConsitution {
     activePrep.setString(8,advAscribeInfo("channel_id"))
     activePrep.setString(9,NOW)
     activePrep.setString(10,advAscribeInfo("amount"))
-    activePrep.executeQuery
+    activePrep.executeQuery*/
 
     connection.close()
     (advAscribeInfo("plan_id"),advAscribeInfo("channel_id"),advAscribeInfo("amount"))
@@ -317,8 +317,8 @@ object sparkSteamReConsitution {
     val advAscribeInfo:mutable.Map[String,String] = mutable.Map[String,String](deviceMap.toSeq:_*)  //immutable 转 mutable
     advAscribeInfo += ("plan_id"->"0","channel_id"->"0")
 
-    val connection: Connection = DriverManager.getConnection(prop.getProperty("clickhouse.jdbc"), "default", "")
-    val sql = "SELECT * FROM test.datadvs_android_active WHERE appid=? AND imei_md5=?"
+    val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.jdbc"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
+    val sql = "SELECT * FROM log_android_active WHERE appid=? AND imei_md5=?"
     val prep = connection.prepareStatement(sql)
     prep.setString(1,deviceMap("appid"))
     prep.setString(2,deviceMap("imei"))
@@ -328,7 +328,7 @@ object sparkSteamReConsitution {
       advAscribeInfo("channel_id") = res.getString("channel_id")
     }
     //写入付费日志表
-    val launchLogSql = "INSERT INTO test.datadvs_android_pay_log(appid, imei_md5, oaid, androidid_md5, mac_md5, ip, plan_id, channel_id, pay_time,pay_amount) VALUES(?,?,?,?,?,?,?,?,?,?)"
+    /*val launchLogSql = "INSERT INTO log_android_pay(appid, imei_md5, oaid, androidid_md5, mac_md5, ip, plan_id, channel_id, pay_time,pay_amount) VALUES(?,?,?,?,?,?,?,?,?,?)"
     val launchLogPrep = connection.prepareStatement(launchLogSql)
     launchLogPrep.setString(1,advAscribeInfo("appid"))
     launchLogPrep.setString(2,advAscribeInfo("imei"))
@@ -340,7 +340,7 @@ object sparkSteamReConsitution {
     launchLogPrep.setString(8,advAscribeInfo("channel_id"))
     launchLogPrep.setString(9,NOW)
     launchLogPrep.setString(10,advAscribeInfo("amount"))
-    launchLogPrep.executeQuery
+    launchLogPrep.executeQuery*/
 
     connection.close()
     (advAscribeInfo("plan_id"),advAscribeInfo("channel_id"),advAscribeInfo("amount"))
@@ -351,14 +351,14 @@ object sparkSteamReConsitution {
    */
   private def launchData(data:Iterator[((String,String,String),String)],prop:Properties) = {
     Try {
-      val connection = DriverManager.getConnection(prop.getProperty("mysql.jdbc"), "root", "")
+      val connection = DriverManager.getConnection(prop.getProperty("mysql.jdbc"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
       try {
         //println(data)
         //TODO 批量写入和更新基础统计数据
-        val planExistSql = "SELECT * FROM test.statistics_data WHERE plan_id=? AND stat_date=?"
+        val planExistSql = "SELECT * FROM statistics_base WHERE plan_id=? AND stat_date=?"
         val statPrep = connection.prepareStatement(planExistSql)
 
-        val planExistSqlRet = "SELECT * FROM test.statistics_retention WHERE plan_id=? AND active_day=? AND retention_days=?"
+        val planExistSqlRet = "SELECT * FROM statistics_retention WHERE plan_id=? AND active_day=? AND retention_days=?"
         val statPrepRet = connection.prepareStatement(planExistSqlRet)
 
         for (row <- data) {
@@ -371,12 +371,12 @@ object sparkSteamReConsitution {
             //如果该计划已有该天的统计记录  则进行数据更新
             var updatePrep: PreparedStatement = null
             if (row._1._3 == "old") {
-              val updateSql = "UPDATE test.statistics_data SET launch_count=launch_count+? WHERE plan_id=?"
+              val updateSql = "UPDATE statistics_base SET launch_count=launch_count+? WHERE plan_id=?"
               updatePrep = connection.prepareStatement(updateSql)
               updatePrep.setInt(1, 1)
               updatePrep.setString(2, row._1._1)
             } else {
-              val updateSql = "UPDATE test.statistics_data SET launch_count=launch_count+?,active_count=active_count+? WHERE plan_id=?"
+              val updateSql = "UPDATE statistics_base SET launch_count=launch_count+?,active_count=active_count+? WHERE plan_id=?"
               updatePrep = connection.prepareStatement(updateSql)
               updatePrep.setInt(1, 1)
               updatePrep.setInt(2, 1)
@@ -388,7 +388,7 @@ object sparkSteamReConsitution {
             if (row._1._3 == "old") {
               throw new Exception("计划数据写入异常")
             } else {
-              val insertSql = "INSERT INTO test.statistics_data(plan_id,channel_id,launch_count,active_count,stat_date) VALUES(?,?,?,?,?)"
+              val insertSql = "INSERT INTO statistics_base(plan_id,channel_id,launch_count,active_count,stat_date) VALUES(?,?,?,?,?)"
               //println(insertSql)
               val insertPrep = connection.prepareStatement(insertSql)
               insertPrep.setString(1, row._1._1)
@@ -417,7 +417,7 @@ object sparkSteamReConsitution {
               val resRet = statPrepRet.executeQuery
               //查询留存记录表中是否存在记录 有记录更新 无记录写入
               if(resRet.next()){
-                val updateSql = "UPDATE test.statistics_retention SET retention_count=retention_count+? WHERE plan_id=? AND active_day=? AND retention_days=?"
+                val updateSql = "UPDATE statistics_retention SET retention_count=retention_count+? WHERE plan_id=? AND active_day=? AND retention_days=?"
                 val updatePrep = connection.prepareStatement(updateSql)
                 updatePrep.setInt(1,1)
                 updatePrep.setString(2,row._1._1)
@@ -425,7 +425,7 @@ object sparkSteamReConsitution {
                 updatePrep.setInt(4,retention_days)
                 updatePrep.executeUpdate
               } else {
-                val insertSql = "INSERT INTO test.statistics_retention(plan_id,channel_id,retention_count,retention_days,active_day) VALUES(?,?,?,?,?)"
+                val insertSql = "INSERT INTO statistics_retention(plan_id,channel_id,retention_count,retention_days,active_day) VALUES(?,?,?,?,?)"
                 val insertPrep = connection.prepareStatement(insertSql)
                 insertPrep.setString(1,row._1._1)
                 insertPrep.setString(2,row._1._2)
@@ -455,9 +455,9 @@ object sparkSteamReConsitution {
    */
   private def payData(data:Iterator[((String,String,String),String)],prop:Properties) = {
 
-      val connection = DriverManager.getConnection(prop.getProperty("mysql.jdbc"), "root", "")
+      val connection = DriverManager.getConnection(prop.getProperty("mysql.jdbc"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
       try {
-        val planExistSql = "SELECT * FROM test.statistics_pay WHERE plan_id=? AND active_date=? AND pay_days=?"
+        val planExistSql = "SELECT * FROM statistics_pay WHERE plan_id=? AND active_date=? AND pay_days=?"
         val statPrep = connection.prepareStatement(planExistSql)
 
         for (row <- data) {
@@ -477,7 +477,7 @@ object sparkSteamReConsitution {
           val res = statPrep.executeQuery
           if (res.next()) {
             //更新付费统计
-            val updateSql = "UPDATE test.statistics_pay SET pay_amount=pay_amount+?,pay_count=pay_count+1 WHERE plan_id=? AND active_date=? AND pay_days=?"
+            val updateSql = "UPDATE statistics_pay SET pay_amount=pay_amount+?,pay_count=pay_count+1 WHERE plan_id=? AND active_date=? AND pay_days=?"
             val updatePrep = connection.prepareStatement(updateSql)
             updatePrep.setInt(1, row._1._3.toInt)
             updatePrep.setString(2, row._1._1)
@@ -486,7 +486,7 @@ object sparkSteamReConsitution {
             updatePrep.executeUpdate()
           } else {
             //新增付费统计
-            val insertSql = "INSERT INTO test.statistics_pay(plan_id,channel_id,pay_amount,pay_count,pay_days,active_date,pay_date) VALUES(?,?,?,?,?,?,?)"
+            val insertSql = "INSERT INTO statistics_pay(plan_id,channel_id,pay_amount,pay_count,pay_days,active_date,pay_date) VALUES(?,?,?,?,?,?,?)"
             val insertPrep = connection.prepareStatement(insertSql)
             insertPrep.setString(1, row._1._1)
             insertPrep.setString(2, row._1._2)
