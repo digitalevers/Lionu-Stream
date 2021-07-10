@@ -3,27 +3,32 @@
  */
 
 import java.sql.{Connection, DriverManager, PreparedStatement, ResultSet, Statement}
-
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.kafka010.{KafkaUtils, LocationStrategies}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.Seconds
 import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
-import org.apache.kafka.common.TopicPartition
 import spray.json.DefaultJsonProtocol.{StringJsonFormat, mapFormat}
-import spray.json.JsonParser
+import spray.json.{DefaultJsonProtocol, JsonParser}
+
 import java.net.{SocketException, SocketTimeoutException}
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.{Date, Properties}
 
-import org.apache.kafka.clients.consumer.ConsumerRecord
-
 import scala.collection.mutable
 import scala.util.Try
 import scala.util.control.Breaks
 
+//定义对应json的实体类
+case class DeviceInfo(amount:String, androidid:String, appName:String, appid:String,applicationId:String,channel:String,imei:String,ip:String,mac:String,model:String,
+                      oaid:String,os:Int,planid:String,sys:Int,time:String,ua:String,versionCode:Int,versionName:String)
+//定义解析协议
+object ResultJsonProtocol extends DefaultJsonProtocol {
+  implicit val deviceInfoFormat = jsonFormat(DeviceInfo, "amount", "androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
+}
+import ResultJsonProtocol._
 
 object sparkSteamReConsitution {
   private  val  NOW = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date())
@@ -61,7 +66,7 @@ object sparkSteamReConsitution {
     val kafkaDStreamForPay = KafkaUtils.createDirectStream(streamingContext,LocationStrategies.PreferConsistent,Subscribe[String,String](topicsPay, kafkaParams))
     kafkaDStreamForPay.map(x=>{
       //println(x.value)
-      val deviceMap  = JsonParser(x.value).convertTo[Map[String,String]]
+      val deviceMap  = getCCParams(JsonParser(x.value).convertTo[DeviceInfo])
       val statusInRedis = isNewDeviceInRedis(deviceMap,prop)
       var temp:(String,String,String) = null
       if(statusInRedis == null){
@@ -83,7 +88,8 @@ object sparkSteamReConsitution {
     val kafkaDStream = KafkaUtils.createDirectStream(streamingContext,LocationStrategies.PreferConsistent,Subscribe[String,String](topics, kafkaParams))
     val wordStream = kafkaDStream.map(x=>{
       //println(x.topic)
-      val deviceMap  = JsonParser(x.value).convertTo[Map[String,String]]
+      val deviceMap  = getCCParams(JsonParser(x.value).convertTo[DeviceInfo])
+
       val statusInRedis = isNewDeviceInRedis(deviceMap,prop)
       var temp:(String,String,String) = null
       if(statusInRedis == null){
@@ -114,7 +120,7 @@ object sparkSteamReConsitution {
    * @return deviceExistInRedis  新设备 null  旧设备 保存在redis中的字符串信息
    *
    */
-  private def isNewDeviceInRedis(deviceMap:Map[String,String],prop:Properties) = {
+  private def isNewDeviceInRedis(deviceMap:Map[String,Any],prop:Properties) = {
     //根据 IMEI 或者 IDFA 设备码查找Redis缓存 判断是否为新设备 若存在缓存记录 为旧设备  若不存在 则为新设备并将设备码写入Redis
     try{
       redisUtil.connect(prop.getProperty("redis.server"))
@@ -127,12 +133,12 @@ object sparkSteamReConsitution {
       }
     }
     //val start = new Date().getTime
-    val deviceExistInRedis = redisUtil.get(deviceMap("appid") + '-' + deviceMap("imei")).getOrElse(null)
+    val deviceExistInRedis = redisUtil.get(deviceMap("appid") + "-" + deviceMap("imei")).getOrElse(null)
     if(deviceExistInRedis != null){
       //如果启动时间不是今天 则更新redis中的启动时间
       val redisData = deviceExistInRedis.split(",")
       if(redisData(1) != TODAY){
-        redisUtil.set(deviceMap("appid") + '-' + deviceMap("imei"),redisData(0) + ',' + TODAY)
+        redisUtil.set(deviceMap("appid") + "-" + deviceMap("imei"),redisData(0) + ',' + TODAY)
       }
     }
     deviceExistInRedis
@@ -526,6 +532,13 @@ object sparkSteamReConsitution {
     println("left---------------"+params1)
     println("right---------------"+params2)
     mutable.Map[String,String](("hi"->"spark"))
+  }
+
+  def getCCParams(cc: AnyRef) = {
+    cc.getClass.getDeclaredFields.foldLeft(Map.empty[String, String]) { (a, f) =>
+      f.setAccessible(true)
+      a + (f.getName -> f.get(cc).toString)
+    }
   }
 
   /**
