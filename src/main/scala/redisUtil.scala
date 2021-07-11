@@ -1,3 +1,8 @@
+/**
+ * redis连接库地址
+ * https://github.com/debasishg/scala-redis
+ */
+
 import com.redis.RedisClient
 
 object redisUtil {
@@ -7,11 +12,11 @@ object redisUtil {
      * 连接 Redis 服务器
      * @param host      Redis服务器地址
      * @param port      Redis服务器端口
-     * @param timeout   连接超时时间 单位ms 默认20ms
+     * @param timeout   连接超时时间 单位ms 默认20ms 0则不设置超时时间
      * @param password  连接密码 默认None
      * @param database  连接数据库序号 默认0号
      */
-    def connect(host: String = "localhost", port: Int = 6379, database: Int = 0, password: Option[Any] = None,timeout: Int = 20): Boolean = {
+    def connect(host: String = "localhost", port: Int = 6379, database: Int = 0, password: Option[Any] = None,timeout: Int = 0): Boolean = {
         //println(timeout)
         if(redisClient == null){
             redisClient = new RedisClient(host, port, database) //为何初始化函数加上 password 和 timeout 两个参数就连接不上 redis了
