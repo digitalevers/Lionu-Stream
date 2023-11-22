@@ -11,34 +11,6 @@
   <component name="ChangeListManager">
     <list default="true" id="5fd991a7-32aa-467f-82ea-0f3ccfe3a8ee" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/Lionsu-Stream.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Lionsu-Stream.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/Lionu-stream.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/jarRepositories.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/jarRepositories.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/scala_compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/scala_compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700641140000.crc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700641145000.bk.crc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700641145000.crc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700641150000.crc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700641155000.bk.crc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700641155000.crc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700641160000.bk.crc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700641160000.crc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700641165000.bk.crc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700641165000.crc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700641140000" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700641145000" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700641145000.bk" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700641150000" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700641155000" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700641155000.bk" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700641160000" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700641160000.bk" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700641165000" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700641165000.bk" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/receivedBlockMetadata/log-1700641135316-1700641195316" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/sparkSteamReConsitution.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/sparkSteamReConsitution.scala" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
