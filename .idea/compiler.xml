@@ -6,12 +6,11 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="zookeeper" />
+        <module name="Lionsu-stream" />
         <module name="Lionsu-Stream" />
+        <module name="zookeeper" />
+        <module name="lionsu-stream" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="Lionsu-stream" target="1.5" />
-    </bytecodeTargetLevel>
   </component>
 </project>

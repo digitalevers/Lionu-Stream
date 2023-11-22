@@ -2,17 +2,16 @@
  * sparkStream重构版
  */
 
-import java.sql.{Connection, DriverManager, PreparedStatement, ResultSet, Statement}
-import org.apache.kafka.common.serialization.StringDeserializer
+
 import org.apache.spark.SparkConf
-import org.apache.spark.streaming.kafka010.{KafkaUtils, LocationStrategies}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.Seconds
+import org.apache.spark.streaming.kafka010.{KafkaUtils, LocationStrategies}
 import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
-import spray.json.DefaultJsonProtocol.{StringJsonFormat, mapFormat}
-import spray.json.{DefaultJsonProtocol, JsonParser}
+import org.apache.kafka.common.serialization.StringDeserializer
 
-import java.net.{SocketException, SocketTimeoutException}
+import java.sql.{Connection, DriverManager, PreparedStatement, ResultSet, Statement}
+import java.net.SocketTimeoutException
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.{Date, Properties}
@@ -20,10 +19,27 @@ import java.util.{Date, Properties}
 import scala.collection.mutable
 import scala.util.Try
 import scala.util.control.Breaks
+import spray.json.{DefaultJsonProtocol, JsonParser}
 
 //定义对应json的实体类
-case class DeviceInfo(amount:String, androidid:String, appName:String, appid:String,applicationId:String,channel:String,imei:String,ip:String,mac:String,model:String,
-                      oaid:String,os:Int,planid:String,sys:Int,time:String,ua:String,versionCode:Int,versionName:String)
+case class DeviceInfo(amount:String,
+                      androidid:String,
+                      appName:String,
+                      appid:String,
+                      applicationId:String,
+                      channel:String,
+                      imei:String,
+                      ip:String,
+                      mac:String,
+                      model:String,
+                      oaid:String,
+                      os:Int,
+                      planid:String,
+                      sys:Int,
+                      time:String,
+                      ua:String,
+                      versionCode:Int,
+                      versionName:String)
 //定义解析协议
 object ResultJsonProtocol extends DefaultJsonProtocol {
   implicit val deviceInfoFormat = jsonFormat(DeviceInfo, "amount", "androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
@@ -33,6 +49,16 @@ import ResultJsonProtocol._
 object sparkSteamReConsitution {
   private  val  NOW = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date())
   private  val TODAY = new SimpleDateFormat("yyyy-MM-dd").format(new Date())
+
+  private def getKafkaParams(_prop:Properties,_topic:String) = {
+    val _map =  Map[String, Object](
+      "bootstrap.servers" -> _prop.getProperty("kafkaParams.bootstrap.servers"),
+      "key.deserializer" -> classOf[StringDeserializer],
+      "value.deserializer" -> classOf[StringDeserializer],
+      "group.id" -> _topic
+    )
+     (List(_topic),_map)
+  }
 
   def main(args: Array[String]): Unit = {
 
@@ -44,48 +70,17 @@ object sparkSteamReConsitution {
     val in = sparkSteamReConsitution.getClass.getClassLoader().getResourceAsStream("application.properties");
     // 使用properties对象加载输入流
     prop.load(in)
-
     /**
      * 流计算设备激活信息
      */
     streamingContext.checkpoint("./saveCheckPoint1")
-    val kafkaParams = Map[String, Object](
-      "bootstrap.servers" -> prop.getProperty("kafkaParams.bootstrap.servers"),
-      "key.deserializer" -> classOf[StringDeserializer],
-      "value.deserializer" -> classOf[StringDeserializer],
-      "group.id" -> "launch"
-    )
-
-    val topics = List("launch")
-    val topicsPay = List("pay")
     /*val topicPartition = new TopicPartition("launch", 1)
     val offset:mutable.Map[TopicPartition, Long] = mutable.Map()
     offset += (topicPartition->0L)*/
 
-    //付费topic
-    val kafkaDStreamForPay = KafkaUtils.createDirectStream(streamingContext,LocationStrategies.PreferConsistent,Subscribe[String,String](topicsPay, kafkaParams))
-    kafkaDStreamForPay.map(x=>{
-      //println(x.value)
-      val deviceMap  = getCCParams(JsonParser(x.value).convertTo[DeviceInfo])
-      val statusInRedis = isNewDeviceInRedis(deviceMap,prop)
-      var temp:(String,String,String) = null
-      if(statusInRedis == null){
-        //新设备
-        temp = handleNewPayConsumerRecord(deviceMap,prop)
-        //throw new Exception("pay通道较与launch通道先处理")
-      } else {
-        //旧设备
-        temp = handleOldPayConsumerRecord(deviceMap,prop)
-      }
-      (temp,statusInRedis)
-    }).reduceByKey(_+_).foreachRDD(rdd=>{
-      rdd.foreachPartition(data=>{
-        //println("pay")
-        payData(data,prop)
-      })
-    })
-
-    val kafkaDStream = KafkaUtils.createDirectStream(streamingContext,LocationStrategies.PreferConsistent,Subscribe[String,String](topics, kafkaParams))
+    //激活topic
+    val launchKafkaParams = getKafkaParams(prop,"launch")
+    val kafkaDStream = KafkaUtils.createDirectStream(streamingContext,LocationStrategies.PreferConsistent,Subscribe[String,String](launchKafkaParams._1, launchKafkaParams._2))
     val wordStream = kafkaDStream.map(x=>{
       //println(x.topic)
       val deviceMap  = getCCParams(JsonParser(x.value).convertTo[DeviceInfo])
@@ -102,11 +97,35 @@ object sparkSteamReConsitution {
       //println(x.topic)
       (temp,statusInRedis)
     }).reduceByKey(_+_).foreachRDD(rdd=>{
-      rdd.foreachPartition(data=>{
-        launchData(data,prop)
-      })
-    }
+        rdd.foreachPartition(data=>{
+          launchData(data,prop)
+        })
+      }
     )
+
+    //付费topic
+    val payKafkaParams = this.getKafkaParams(prop, "pay")
+    val kafkaDStreamForPay = KafkaUtils.createDirectStream(streamingContext, LocationStrategies.PreferConsistent, Subscribe[String, String](payKafkaParams._1, payKafkaParams._2))
+    kafkaDStreamForPay.map(x => {
+      //println(x.value)
+      val deviceMap = getCCParams(JsonParser(x.value).convertTo[DeviceInfo])
+      val statusInRedis = isNewDeviceInRedis(deviceMap, prop)
+      var temp: (String, String, String) = null
+      if (statusInRedis == null) {
+        //新设备
+        temp = handleNewPayConsumerRecord(deviceMap, prop)
+        //throw new Exception("pay通道比launch通道先处理")
+      } else {
+        //旧设备
+        temp = handleOldPayConsumerRecord(deviceMap, prop)
+      }
+      (temp, statusInRedis)
+    }).reduceByKey(_ + _).foreachRDD(rdd => {
+      rdd.foreachPartition(data => {
+        //println("pay")
+        payData(data, prop)
+      })
+    })
 
     streamingContext.start()
     streamingContext.awaitTermination()
@@ -138,7 +157,7 @@ object sparkSteamReConsitution {
       //如果启动时间不是今天 则更新redis中的启动时间
       val redisData = deviceExistInRedis.split(",")
       if(redisData(1) != TODAY){
-        redisUtil.set(deviceMap("appid") + "-" + deviceMap("imei"),redisData(0) + ',' + TODAY)
+        redisUtil.set(deviceMap("appid") + "-" + deviceMap("imei"), redisData(0) + ',' + TODAY)
       }
     }
     deviceExistInRedis
