@@ -215,11 +215,11 @@ object sparkSteamReConsitution {
   private def handleNewLaunchConsumerRecord(deviceMap:Map[String,String],prop:Properties) = {
     //查找条件优先级 imei->oaid->android_id->mac->ip
     val sqls = mutable.LinkedHashMap[String,String](
-      "imei"->"SELECT  * FROM log_android_click_data WHERE imei_md5=?",
-      "oaid"->"SELECT  * FROM log_android_click_data WHERE oaid=?",
-      "androidid"->"SELECT  * FROM log_android_click_data WHERE androidid_md5=?",
-      "mac"->"SELECT  * FROM log_android_click_data WHERE mac_md5=?",
-      "ip"->"SELECT  * FROM log_android_click_data WHERE ip=?"
+      "imei"      ->"SELECT  * FROM log_android_click_data WHERE imei_md5=?",
+              "oaid"      ->"SELECT  * FROM log_android_click_data WHERE oaid=?",
+              "androidid" ->"SELECT  * FROM log_android_click_data WHERE androidid_md5=?",
+              "mac"       ->"SELECT  * FROM log_android_click_data WHERE mac_md5=?",
+              "ip"        ->"SELECT  * FROM log_android_click_data WHERE ip=?"
     )
     ////////////////新设备
     val advAscribeInfo:mutable.Map[String,String] = mutable.Map[String,String](deviceMap.toSeq:_*)    //immutable.map 转 mutable.map
@@ -232,11 +232,11 @@ object sparkSteamReConsitution {
       for ((k, sql) <- sqls) {
         val prep = connection.prepareStatement(sql)
         k match {
-          case "imei"=>prep.setString(1, deviceMap("imei"))
-          case "oaid"=>prep.setString(1, deviceMap("oaid"))
+          case "imei"     =>prep.setString(1, deviceMap("imei"))
+          case "oaid"     =>prep.setString(1, deviceMap("oaid"))
           case "androidid"=>prep.setString(1, deviceMap("androidid"))
-          case "mac"=>prep.setString(1, deviceMap("mac"))
-          case "ip"=>prep.setString(1, deviceMap("ip"))
+          case "mac"      =>prep.setString(1, deviceMap("mac"))
+          case "ip"       =>prep.setString(1, deviceMap("ip"))
         }
         val res = prep.executeQuery
         //广告归因信息
@@ -326,11 +326,11 @@ object sparkSteamReConsitution {
   private def handleNewPayConsumerRecord(deviceMap:Map[String,String],prop:Properties) = {
     //查找条件优先级 imei->oaid->android_id->mac->ip
     val sqls = mutable.LinkedHashMap[String,String](
-      "imei"->"SELECT  * FROM log_android_click_data WHERE imei_md5=?",
-      "oaid"->"SELECT  * FROM log_android_click_data WHERE oaid=?",
-      "androidid"->"SELECT  * FROM log_android_click_data WHERE androidid_md5=?",
-      "mac"->"SELECT  * FROM log_android_click_data WHERE mac_md5=?",
-      "ip"->"SELECT  * FROM log_android_click_data WHERE ip=?"
+      "imei"     ->"SELECT  * FROM log_android_click_data WHERE imei_md5=?",
+              "oaid"     ->"SELECT  * FROM log_android_click_data WHERE oaid=?",
+              "androidid"->"SELECT  * FROM log_android_click_data WHERE androidid_md5=?",
+              "mac"      ->"SELECT  * FROM log_android_click_data WHERE mac_md5=?",
+              "ip"       ->"SELECT  * FROM log_android_click_data WHERE ip=?"
     )
     ////////////////新设备
     val advAscribeInfo:mutable.Map[String,String] = mutable.Map[String,String](deviceMap.toSeq:_*)    //immutable.map 转 mutable.map
@@ -343,11 +343,11 @@ object sparkSteamReConsitution {
       for ((k, sql) <- sqls) {
         val prep = connection.prepareStatement(sql)
         k match {
-          case "imei"=>prep.setString(1, deviceMap("imei"))
-          case "oaid"=>prep.setString(1, deviceMap("oaid"))
+          case "imei"     =>prep.setString(1, deviceMap("imei"))
+          case "oaid"     =>prep.setString(1, deviceMap("oaid"))
           case "androidid"=>prep.setString(1, deviceMap("androidid"))
-          case "mac"=>prep.setString(1, deviceMap("mac"))
-          case "ip"=>prep.setString(1, deviceMap("ip"))
+          case "mac"      =>prep.setString(1, deviceMap("mac"))
+          case "ip"       =>prep.setString(1, deviceMap("ip"))
         }
         val res = prep.executeQuery
         //广告归因信息
