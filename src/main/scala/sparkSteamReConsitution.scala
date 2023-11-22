@@ -129,6 +129,7 @@ object sparkSteamReConsitution {
     val wordStream = kafkaDStream.map(x=>{
       //println(x.topic)
       val deviceMap  = getCCParams(JsonParser(x.value).convertTo[launchDeviceInfo])
+      println(deviceMap)
 
       val statusInRedis = isNewDeviceInRedis(deviceMap,prop)
       var temp:(String,String,String) = null
@@ -261,7 +262,7 @@ object sparkSteamReConsitution {
     activePrep.setString(7,advAscribeInfo("plan_id"))
     activePrep.setString(8,advAscribeInfo("channel_id"))
     activePrep.setString(9,NOW)
-    activePrep.executeQuery
+    activePrep.executeUpdate()
     //写入启动表
     val launchLogSql = "INSERT INTO log_android_launch(appid, imei_md5, oaid, androidid_md5, mac_md5, ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
     val launchLogPrep = connection.prepareStatement(launchLogSql)
@@ -274,7 +275,7 @@ object sparkSteamReConsitution {
     launchLogPrep.setString(7,advAscribeInfo("plan_id"))
     launchLogPrep.setString(8,advAscribeInfo("channel_id"))
     launchLogPrep.setString(9,NOW)
-    launchLogPrep.executeQuery
+    launchLogPrep.executeUpdate
     //写入redis  设备激活时间+启动更新时间
     redisUtil.set(advAscribeInfo("appid") + '-' + deviceMap("imei"),TODAY + ',' + TODAY)
     connection.close()
@@ -311,7 +312,7 @@ object sparkSteamReConsitution {
     launchLogPrep.setString(7,advAscribeInfo("plan_id"))
     launchLogPrep.setString(8,advAscribeInfo("channel_id"))
     launchLogPrep.setString(9,NOW)
-    launchLogPrep.executeQuery
+    launchLogPrep.executeUpdate()
 
 
     connection.close()
