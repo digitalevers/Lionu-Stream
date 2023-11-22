@@ -22,7 +22,47 @@ import scala.util.control.Breaks
 import spray.json.{DefaultJsonProtocol, JsonParser}
 
 //定义对应json的实体类
-case class DeviceInfo(amount:String,
+
+case class launchDeviceInfo(
+                             androidid:String,
+                             appName:String,
+                             appid:String,
+                             applicationId:String,
+                             channel:String,
+                             imei:String,
+                             ip:String,
+                             mac:String,
+                             model:String,
+                             oaid:String,
+                             os:Int,
+                             planid:String,
+                             sys:Int,
+                             time:String,
+                             ua:String,
+                             versionCode:Int,
+                             versionName:String)
+
+case class regDeviceInfo(
+                          androidid:String,
+                          appName:String,
+                          appid:String,
+                          applicationId:String,
+                          channel:String,
+                          imei:String,
+                          ip:String,
+                          mac:String,
+                          model:String,
+                          oaid:String,
+                          os:Int,
+                          planid:String,
+                          sys:Int,
+                          time:String,
+                          ua:String,
+                          versionCode:Int,
+                          versionName:String)
+
+case class payDeviceInfo(
+                      amount:String,
                       androidid:String,
                       appName:String,
                       appid:String,
@@ -40,9 +80,13 @@ case class DeviceInfo(amount:String,
                       ua:String,
                       versionCode:Int,
                       versionName:String)
+
+
 //定义解析协议
 object ResultJsonProtocol extends DefaultJsonProtocol {
-  implicit val deviceInfoFormat = jsonFormat(DeviceInfo, "amount", "androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
+  implicit val launchDeviceInfoFormat = jsonFormat(launchDeviceInfo,"androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
+  implicit val regDeviceInfoFormat = jsonFormat(regDeviceInfo,"androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
+  implicit val payDeviceInfoFormat = jsonFormat(payDeviceInfo, "amount", "androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
 }
 import ResultJsonProtocol._
 
@@ -79,11 +123,12 @@ object sparkSteamReConsitution {
     offset += (topicPartition->0L)*/
 
     //激活topic
-    val launchKafkaParams = getKafkaParams(prop,"launch")
+    val launchKafkaParams = this.getKafkaParams(prop,"launch")
+    println(launchKafkaParams)
     val kafkaDStream = KafkaUtils.createDirectStream(streamingContext,LocationStrategies.PreferConsistent,Subscribe[String,String](launchKafkaParams._1, launchKafkaParams._2))
     val wordStream = kafkaDStream.map(x=>{
       //println(x.topic)
-      val deviceMap  = getCCParams(JsonParser(x.value).convertTo[DeviceInfo])
+      val deviceMap  = getCCParams(JsonParser(x.value).convertTo[launchDeviceInfo])
 
       val statusInRedis = isNewDeviceInRedis(deviceMap,prop)
       var temp:(String,String,String) = null
@@ -105,10 +150,11 @@ object sparkSteamReConsitution {
 
     //付费topic
     val payKafkaParams = this.getKafkaParams(prop, "pay")
+    //println(payKafkaParams)
     val kafkaDStreamForPay = KafkaUtils.createDirectStream(streamingContext, LocationStrategies.PreferConsistent, Subscribe[String, String](payKafkaParams._1, payKafkaParams._2))
     kafkaDStreamForPay.map(x => {
       //println(x.value)
-      val deviceMap = getCCParams(JsonParser(x.value).convertTo[DeviceInfo])
+      val deviceMap = getCCParams(JsonParser(x.value).convertTo[payDeviceInfo])
       val statusInRedis = isNewDeviceInRedis(deviceMap, prop)
       var temp: (String, String, String) = null
       if (statusInRedis == null) {
