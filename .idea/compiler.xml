@@ -7,6 +7,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="Lionsu-stream" />
+        <module name="Lionu-Stream" />
         <module name="Lionsu-Stream" />
         <module name="zookeeper" />
         <module name="lionsu-stream" />

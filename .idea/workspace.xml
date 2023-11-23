@@ -11,6 +11,31 @@
   <component name="ChangeListManager">
     <list default="true" id="5fd991a7-32aa-467f-82ea-0f3ccfe3a8ee" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/Lionsu-Stream.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Lionsu-Stream.iml" afterDir="false" />
+<<<<<<< HEAD
+=======
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700662420000.bk.crc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700662420000.crc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700662425000.bk.crc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700662425000.crc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700662430000.bk.crc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700662430000.crc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700662435000.bk.crc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700662435000.crc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700662440000.bk.crc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700662440000.crc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700662420000" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700662420000.bk" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700662425000" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700662425000.bk" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700662430000" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700662430000.bk" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700662435000" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700662435000.bk" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700662440000" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700662440000.bk" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/receivedBlockMetadata/log-1700662392945-1700662452945" beforeDir="false" />
+>>>>>>> 0aafeaaa9ebe84ffd918a72629ba0c5a31d4f07e
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -48,6 +73,14 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="localRepository" value="G:\.m2\repository" />
+        <option name="userSettingsFile" value="G:\.m2\settings.xml" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
   <component name="ProjectCodeStyleSettingsMigration">
     <option name="version" value="2" />
   </component>
@@ -56,6 +89,7 @@
   <component name="ProjectViewState">
     <option name="showLibraryContents" value="true" />
   </component>
+<<<<<<< HEAD
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
@@ -65,8 +99,22 @@
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.4862069",
     "settings.editor.selected.configurable": "Errors"
+=======
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;TODO_SCOPE&quot;: &quot;All Places&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Java/jdk11&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.4862069&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;reference.projectsettings.compiler.javacompiler&quot;
+>>>>>>> 0aafeaaa9ebe84ffd918a72629ba0c5a31d4f07e
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CreateClassDialog.RecentsKey">
       <recent name="com." />
@@ -84,7 +132,8 @@
       <option name="ALTERNATIVE_JRE_PATH" value="1.8" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
       <option name="MAIN_CLASS_NAME" value="sparkSteamReConsitution" />
-      <module name="zookeeper" />
+      <module name="Lionu-Stream" />
+      <option name="VM_PARAMETERS" value="-Xms512m" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -140,6 +189,7 @@
     <select />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/Lionu_Stream$sparkSteamReConsitution.ic" NAME="sparkSteamReConsitution Coverage Results" MODIFIED="1700651554722" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/zookeeper$sparkSteamOld.ic" NAME="sparkSteamOld Coverage Results" MODIFIED="1606786124903" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
   </component>
 </project>
