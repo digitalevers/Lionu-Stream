@@ -125,3 +125,8 @@ nb-configuration.xml
 /phpunit*.xml
 /.phpunit.*.cache
 
+#Scala/Java project compile class
+project/
+saveCheck*/
+target/
+
