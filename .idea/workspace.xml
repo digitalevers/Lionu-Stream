@@ -1,71 +1,69 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="ArtifactsWorkspaceSettings">
-    <artifacts-to-build>
-      <artifact name="lionsu-stream:jar" />
-    </artifacts-to-build>
-  </component>
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5fd991a7-32aa-467f-82ea-0f3ccfe3a8ee" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/Lionsu-Stream.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Lionsu-Stream.iml" afterDir="false" />
-<<<<<<< HEAD
-=======
+    <list default="true" id="ed1091a0-8b2a-4d9b-a601-305e0934bede" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/main/scala/JDBCutils.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/Lionsu-stream.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Lionsu-stream.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/scala_settings.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700662420000.bk.crc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700662420000.crc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700662425000.bk.crc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700662425000.crc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700662430000.bk.crc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700662430000.crc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700662435000.bk.crc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700662435000.crc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700662440000.bk.crc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700662440000.crc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700662420000" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700662420000.bk" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700662425000" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700662425000.bk" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700662430000" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700662430000.bk" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700662435000" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700662435000.bk" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700662440000" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700662440000.bk" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/receivedBlockMetadata/log-1700662392945-1700662452945" beforeDir="false" />
->>>>>>> 0aafeaaa9ebe84ffd918a72629ba0c5a31d4f07e
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700712070000.bk.crc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700712070000.crc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700712075000.bk.crc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700712075000.crc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700712080000.bk.crc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700712080000.crc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700712085000.bk.crc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700712085000.crc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700712090000.bk.crc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/.checkpoint-1700712090000.crc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700712070000" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700712070000.bk" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700712075000" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700712075000.bk" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700712080000" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700712080000.bk" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700712085000" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700712085000.bk" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700712090000" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/checkpoint-1700712090000.bk" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saveCheckPoint1/receivedBlockMetadata/log-1700712046640-1700712106640" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/sparkSteamReConsitution.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/sparkSteamReConsitution.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/ResultJsonProtocol$.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/ResultJsonProtocol.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$2.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$3.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$4$$anonfun$apply$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$4.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$5.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$getCCParams$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$hashMD5$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$main$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$main$2.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$main$3$$anonfun$apply$2.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$main$3.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$sparkSteamReConsitution$$handleNewLaunchConsumerRecord$1$$anonfun$apply$mcV$sp$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$sparkSteamReConsitution$$handleNewLaunchConsumerRecord$1$$anonfun$apply$mcV$sp$2.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$sparkSteamReConsitution$$handleNewLaunchConsumerRecord$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$sparkSteamReConsitution$$handleNewPayConsumerRecord$1$$anonfun$apply$mcV$sp$3.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$sparkSteamReConsitution$$handleNewPayConsumerRecord$1$$anonfun$apply$mcV$sp$4.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$sparkSteamReConsitution$$handleNewPayConsumerRecord$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$sparkSteamReConsitution$$launchData$1$$anonfun$apply$mcV$sp$5.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$sparkSteamReConsitution$$launchData$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$$anonfun$sparkSteamReConsitution$$payData$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution$.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sparkSteamReConsitution.class" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
-  </component>
-  <component name="CodeStyleSettingsInfer">
-    <option name="done" value="true" />
-  </component>
-  <component name="CoverageViewManager">
-    <option name="myElementSize" value="238" />
-  </component>
-  <component name="ExternalProjectsData">
-    <projectState path="$PROJECT_DIR$">
-      <ProjectState />
-    </projectState>
-  </component>
-  <component name="ExternalProjectsManager">
-    <system id="SBT">
-      <state>
-        <projects_view />
-      </state>
-    </system>
-  </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="Class" />
-      </list>
-    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -73,67 +71,32 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
-  <component name="MavenImportPreferences">
-    <option name="generalSettings">
-      <MavenGeneralSettings>
-        <option name="localRepository" value="G:\.m2\repository" />
-        <option name="userSettingsFile" value="G:\.m2\settings.xml" />
-      </MavenGeneralSettings>
-    </option>
-  </component>
   <component name="ProjectCodeStyleSettingsMigration">
     <option name="version" value="2" />
   </component>
-  <component name="ProjectId" id="1joWZFUoFutccosg05xMjweakhn" />
+  <component name="ProjectId" id="2YZE3WT69JW6lyemKm5heACCm4g" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-<<<<<<< HEAD
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "E:/star_sea/Scala/untitled1",
-    "project.structure.last.edited": "Project",
-    "project.structure.proportion": "0.15",
-    "project.structure.side.proportion": "0.4862069",
-    "settings.editor.selected.configurable": "Errors"
-=======
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;TODO_SCOPE&quot;: &quot;All Places&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/Java/jdk11&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.4862069&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;reference.projectsettings.compiler.javacompiler&quot;
->>>>>>> 0aafeaaa9ebe84ffd918a72629ba0c5a31d4f07e
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "last_opened_file_path": "E:/star_sea/量U广告归因系统/项目源码/github/Lionu-stream/src/main/scala"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
-    <key name="CreateClassDialog.RecentsKey">
-      <recent name="com." />
-      <recent name="" />
-    </key>
-    <key name="CopyClassDialog.RECENTS_KEY">
-      <recent name="" />
-    </key>
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\Users\Administrator\IdeaProjects\zookeeper\src\main\scala" />
+      <recent name="E:\star_sea\量U广告归因系统\项目源码\github\Lionu-stream\src\main\scala" />
+      <recent name="E:\star_sea\量U广告归因系统\项目源码\github\Lionu-stream\src\main" />
     </key>
   </component>
   <component name="RunManager">
-    <configuration name="sparkSteamReConsitution" type="Application" factoryName="Application" activateToolWindowBeforeRun="false" temporary="true">
-      <option name="ALTERNATIVE_JRE_PATH" value="1.8" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <configuration name="sparkSteamReConsitution" type="Application" factoryName="Application" temporary="true">
       <option name="MAIN_CLASS_NAME" value="sparkSteamReConsitution" />
-      <module name="Lionu-Stream" />
-      <option name="VM_PARAMETERS" value="-Xms512m" />
+      <module name="zookeeper" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -144,52 +107,18 @@
       </list>
     </recent_temporary>
   </component>
-  <component name="ScalaProjectSettings">
-    <option name="scala3DisclaimerShown" value="true" />
-  </component>
-  <component name="ServiceViewManager">
-    <option name="viewStates">
-      <list>
-        <serviceView>
-          <treeState>
-            <expand />
-            <select />
-          </treeState>
-        </serviceView>
-      </list>
-    </option>
-  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
-  <component name="SvnConfiguration">
-    <configuration />
-  </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="5fd991a7-32aa-467f-82ea-0f3ccfe3a8ee" name="Default Changelist" comment="" />
-      <created>1604470978424</created>
+      <changelist id="ed1091a0-8b2a-4d9b-a601-305e0934bede" name="Changes" comment="" />
+      <created>1700724502865</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1604470978424</updated>
+      <updated>1700724502865</updated>
     </task>
     <servers />
   </component>
-  <component name="Vcs.Log.Tabs.Properties">
-    <option name="TAB_STATES">
-      <map>
-        <entry key="MAIN">
-          <value>
-            <State />
-          </value>
-        </entry>
-      </map>
-    </option>
-  </component>
-  <component name="XSLT-Support.FileAssociations.UIState">
-    <expand />
-    <select />
-  </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Lionu_Stream$sparkSteamReConsitution.ic" NAME="sparkSteamReConsitution Coverage Results" MODIFIED="1700651554722" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/zookeeper$sparkSteamOld.ic" NAME="sparkSteamOld Coverage Results" MODIFIED="1606786124903" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
   </component>
 </project>
