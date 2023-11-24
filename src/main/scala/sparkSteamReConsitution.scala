@@ -15,11 +15,12 @@ import java.net.SocketTimeoutException
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.{Date, Properties}
-
 import scala.collection.mutable
 import scala.util.Try
-import scala.util.control.Breaks
+import scala.util.control.Breaks._
 import spray.json.{DefaultJsonProtocol, JsonParser}
+
+
 
 //定义对应json的实体类
 
@@ -124,7 +125,7 @@ object sparkSteamReConsitution {
 
     //激活topic
     val launchKafkaParams = this.getKafkaParams(prop,"launch")
-    println(launchKafkaParams)
+    //println(launchKafkaParams)
     val kafkaDStream = KafkaUtils.createDirectStream(streamingContext,LocationStrategies.PreferConsistent,Subscribe[String,String](launchKafkaParams._1, launchKafkaParams._2))
     val wordStream = kafkaDStream.map(x=>{
       //println(x.topic)
@@ -230,8 +231,7 @@ object sparkSteamReConsitution {
     //val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
     val connection: Connection = JDBCutil.getConnection
     //查找7天内的 mysql 数据进行归因
-    val loop = new Breaks;
-    loop.breakable {
+    breakable {
       for ((k, sql) <- sqls) {
         val prep = connection.prepareStatement(sql)
         k match {
@@ -247,7 +247,7 @@ object sparkSteamReConsitution {
           advAscribeInfo("plan_id") = res.getString("plan_id")
           advAscribeInfo("channel_id") = res.getString("channel_id")
           //println(advAscribeInfo)
-          loop.break()
+          break()
         }
 
       }
@@ -316,8 +316,7 @@ object sparkSteamReConsitution {
     //val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
     val connection: Connection = JDBCutil.getConnection
     //查找7天内的 mysql 数据进行归因
-    val loop = new Breaks;
-    loop.breakable {
+    breakable {
       for ((k, sql) <- sqls) {
         val prep = connection.prepareStatement(sql)
         k match {
@@ -333,7 +332,7 @@ object sparkSteamReConsitution {
           advAscribeInfo("plan_id") = res.getString("plan_id")
           advAscribeInfo("channel_id") = res.getString("channel_id")
           //println(advAscribeInfo)
-          loop.break()
+          break()
         }
 
       }
