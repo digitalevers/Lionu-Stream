@@ -98,6 +98,7 @@ _modules/*
 # Jetbrains editors (PHPStorm, etc)
 .idea/
 *.iml
+*.properties
 
 # Netbeans
 nbproject/
@@ -129,4 +130,5 @@ nb-configuration.xml
 project/
 saveCheck*/
 target/
+
 
