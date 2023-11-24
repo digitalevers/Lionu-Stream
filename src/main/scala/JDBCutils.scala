@@ -3,6 +3,8 @@ import com.alibaba.druid.pool.DruidDataSourceFactory
 import java.sql.{Connection, PreparedStatement, ResultSet}
 import java.util.Properties
 import javax.sql.DataSource
+import collection.JavaConverters._
+import scala.collection.mutable.ArrayBuffer
 
 object JDBCutil {
   //初始化连接池
@@ -11,18 +13,25 @@ object JDBCutil {
   //初始化连接池方法
   def init(): DataSource = {
     //读取配置文件
-    val prop = new Properties();
-    // 使用ClassLoader加载properties配置文件生成对应的输入流
-    val in = getClass.getClassLoader().getResourceAsStream("application.properties");
-    // 使用properties对象加载输入流
-    prop.load(in)
+//    val prop = new Properties();
+//    // 使用ClassLoader加载properties配置文件生成对应的输入流
+//    val in = JDBCutil.getClass.getClassLoader().getResourceAsStream("application.properties")
+//    println(in)
+//    // 使用properties对象加载输入流
+//    prop.load(in)
 
     val properties = new Properties()
+//    properties.setProperty("driverClassName", "com.mysql.cj.jdbc.Driver")
+//    properties.setProperty("url", prop.getProperty("mysql.url"))
+//    properties.setProperty("username", prop.getProperty("mysql.user"))
+//    properties.setProperty("password", prop.getProperty("mysql.password"))
+//    properties.setProperty("maxActive", "50")
     properties.setProperty("driverClassName", "com.mysql.cj.jdbc.Driver")
-    properties.setProperty("url", prop.getProperty("mysql.url"))
-    properties.setProperty("username", prop.getProperty("mysql.user"))
-    properties.setProperty("password", prop.getProperty("mysql.password"))
+    properties.setProperty("url", "jdbc:mysql://39.98.78.200:3306/lionu")
+    properties.setProperty("username", "root")
+    properties.setProperty("password", "123456")
     properties.setProperty("maxActive", "50")
+
     DruidDataSourceFactory.createDataSource(properties)
   }
 
@@ -53,14 +62,14 @@ object JDBCutil {
   }
 
   /**
-   *   查找记录
-   *   查询到 以数组形式返回第一行记录
-   *   未查询到返回 null
+   * 查找记录
+   * 查询到 以数组形式返回第一行记录
+   * 未查询到返回 null
    */
 
-  def executeQuery(connection: Connection, sql: String, params: Array[Any]): Array[Any] = {
-    var rs:ResultSet = null
-    var queryResult:Array[Any] = null
+  def executeQuery(connection: Connection, sql: String, params: Array[Any]) = {
+    var rs: ResultSet = null
+    val queryResult:ArrayBuffer[ArrayBuffer[String]] = new ArrayBuffer[ArrayBuffer[String]]
     var pstmt: PreparedStatement = null
     try {
       pstmt = connection.prepareStatement(sql)
@@ -68,8 +77,13 @@ object JDBCutil {
         pstmt.setObject(i + 1, params(i))
       }
       rs = pstmt.executeQuery()
-      if(rs.next()){
-        queryResult = Array(rs.getArray(0))
+      val fieldNumber = rs.getMetaData.getColumnCount
+      while (rs.next()) {
+        val temp = ArrayBuffer[String]()
+        for(i <- 1 to fieldNumber){
+          temp.append(rs.getString(i))
+        }
+        queryResult.append(temp)
       }
       pstmt.close()
     } catch {

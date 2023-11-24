@@ -10,7 +10,7 @@ import org.apache.spark.streaming.kafka010.{KafkaUtils, LocationStrategies}
 import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
 import org.apache.kafka.common.serialization.StringDeserializer
 
-import java.sql.{Connection, DriverManager, PreparedStatement, ResultSet, Statement}
+import java.sql.{Connection, PreparedStatement, ResultSet, Statement}
 import java.net.SocketTimeoutException
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
@@ -123,26 +123,25 @@ object sparkSteamReConsitution {
     val offset:mutable.Map[TopicPartition, Long] = mutable.Map()
     offset += (topicPartition->0L)*/
 
-    //激活topic
+    // 1.激活topic
     val launchKafkaParams = this.getKafkaParams(prop,"launch")
     //println(launchKafkaParams)
     val kafkaDStream = KafkaUtils.createDirectStream(streamingContext,LocationStrategies.PreferConsistent,Subscribe[String,String](launchKafkaParams._1, launchKafkaParams._2))
     val wordStream = kafkaDStream.map(x=>{
       //println(x.topic)
       val deviceMap  = getCCParams(JsonParser(x.value).convertTo[launchDeviceInfo])
-      println(deviceMap)
+      //println(deviceMap)
 
-      val statusInRedis = isNewDeviceInRedis(deviceMap,prop)
       var temp:(String,String,String) = null
-      if(statusInRedis == null){
-        val statusInMySQL = isNewDeviceInMySQL(deviceMap)
-
+      var statusInRedis = ""
+      if( (statusInRedis = isNewDeviceInRedis(deviceMap,prop)) == null && (statusInRedis = isNewDeviceInMySQL(deviceMap)) == null ){
         //新设备
-        temp = handleNewLaunchConsumerRecord(deviceMap,prop)
+        temp = handleNewLaunchConsumerRecord(deviceMap, prop)
       } else {
         //旧设备
-        temp = handleOldLaunchConsumerRecord(deviceMap,prop)
+        temp = handleOldLaunchConsumerRecord(deviceMap, prop)
       }
+
       //println(x.topic)
       (temp,statusInRedis)
     }).reduceByKey(_+_).foreachRDD(rdd=>{
@@ -152,7 +151,9 @@ object sparkSteamReConsitution {
       }
     )
 
-    //付费topic
+
+
+    // 2.付费topic
     val payKafkaParams = this.getKafkaParams(prop, "pay")
     //println(payKafkaParams)
     val kafkaDStreamForPay = KafkaUtils.createDirectStream(streamingContext, LocationStrategies.PreferConsistent, Subscribe[String, String](payKafkaParams._1, payKafkaParams._2))
@@ -192,7 +193,7 @@ object sparkSteamReConsitution {
    *
    */
   private def isNewDeviceInRedis(deviceMap:Map[String,Any],prop:Properties) = {
-    //根据 IMEI 或者 IDFA 设备码查找Redis缓存 判断是否为新设备 若存在缓存记录 为旧设备  若不存在 则为新设备并将设备码写入Redis
+    //根据 OAID 或者 IDFA 设备码查找Redis缓存 判断是否为新设备 若存在缓存记录 为旧设备  若不存在 则为新设备并将设备码写入Redis
     try{
       redisUtil.connect(prop.getProperty("redis.server"))
     } catch {
@@ -222,15 +223,22 @@ object sparkSteamReConsitution {
    * @param prop      属性参数
    * @return deviceExistInMySQL
    *         新设备返回null
-   *         旧设备返回保存在 MySQL 中的激活信息 格式为《激活时间,最近启动时间》
-   *
+   *         旧设备返回保存在 MySQL 中的激活信息 格式为 "激活时间,最近启动时间"
+   * TODO 根据设备类型是Android还是iOS查找对应的数据库表
    */
-  private def isNewDeviceInMySQL(deviceMap:Map[String,Any])  {
-    //根据 OAID 或者 IDFA 设备码查找Redis缓存 判断是否为新设备 若存在缓存记录 为旧设备  若不存在 则为新设备并将设备码写入Redis
+  private def isNewDeviceInMySQL(deviceMap:Map[String,Any])=  {
     val connection: Connection = JDBCutil.getConnection
-    val activeExistSql = "SELECT * FROM log_android_active WHERE oaid_md5=?"
-    val res = JDBCutil.executeQuery(connection, activeExistSql, Array(deviceMap("oaid")))
-    res.foreach(println)
+    val activeExistSql = "SELECT active_time FROM log_android_active WHERE oaid_md5=? ORDER BY active_time LIMIT 0,1"
+    val activeRes = JDBCutil.executeQuery(connection, activeExistSql, Array(deviceMap("oaid")))
+    if(activeRes.length == 0){
+      //新设备
+       null
+    } else {
+      val launchExistSql = "SELECT launch_time FROM log_android_launch WHERE oaid_md5=? ORDER BY launch_time DESC LIMIT 0,1"
+      val launchRes = JDBCutil.executeQuery(connection, launchExistSql, Array(deviceMap("oaid")))
+      //旧设备
+       activeRes(0)(0)+','+launchRes(0)(0)
+    }
   }
 
   /**
