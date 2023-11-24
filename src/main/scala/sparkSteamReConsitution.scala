@@ -135,6 +135,8 @@ object sparkSteamReConsitution {
       val statusInRedis = isNewDeviceInRedis(deviceMap,prop)
       var temp:(String,String,String) = null
       if(statusInRedis == null){
+        val statusInMySQL = isNewDeviceInMySQL(deviceMap)
+
         //新设备
         temp = handleNewLaunchConsumerRecord(deviceMap,prop)
       } else {
@@ -210,6 +212,25 @@ object sparkSteamReConsitution {
       }
     }
     deviceExistInRedis
+  }
+
+  /**
+   * 查询 mysql 激活表是否新设备
+   * redis未查询到则再查询一次MySQL
+   *
+   * @param deviceMap 设备信息
+   * @param prop      属性参数
+   * @return deviceExistInMySQL
+   *         新设备返回null
+   *         旧设备返回保存在 MySQL 中的激活信息 格式为《激活时间,最近启动时间》
+   *
+   */
+  private def isNewDeviceInMySQL(deviceMap:Map[String,Any])  {
+    //根据 OAID 或者 IDFA 设备码查找Redis缓存 判断是否为新设备 若存在缓存记录 为旧设备  若不存在 则为新设备并将设备码写入Redis
+    val connection: Connection = JDBCutil.getConnection
+    val activeExistSql = "SELECT * FROM log_android_active WHERE oaid_md5=?"
+    val res = JDBCutil.executeQuery(connection, activeExistSql, Array(deviceMap("oaid")))
+    res.foreach(println)
   }
 
   /**

@@ -1,5 +1,6 @@
 import com.alibaba.druid.pool.DruidDataSourceFactory
-import java.sql.{Connection, PreparedStatement}
+
+import java.sql.{Connection, PreparedStatement, ResultSet}
 import java.util.Properties
 import javax.sql.DataSource
 
@@ -49,6 +50,32 @@ object JDBCutil {
       case e: Exception => e.printStackTrace()
     }
     rtn
+  }
+
+  /**
+   *   查找记录
+   *   查询到 以数组形式返回第一行记录
+   *   未查询到返回 null
+   */
+
+  def executeQuery(connection: Connection, sql: String, params: Array[Any]): Array[Any] = {
+    var rs:ResultSet = null
+    var queryResult:Array[Any] = null
+    var pstmt: PreparedStatement = null
+    try {
+      pstmt = connection.prepareStatement(sql)
+      for (i <- params.indices) {
+        pstmt.setObject(i + 1, params(i))
+      }
+      rs = pstmt.executeQuery()
+      if(rs.next()){
+        queryResult = Array(rs.getArray(0))
+      }
+      pstmt.close()
+    } catch {
+      case e: Exception => e.printStackTrace()
+    }
+    queryResult
   }
 
   //判断记录是否存在
