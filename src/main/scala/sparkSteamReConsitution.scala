@@ -18,7 +18,7 @@ import java.util.{Date, Properties}
 import scala.collection.mutable
 import scala.util.Try
 import scala.util.control.Breaks._
-import spray.json.{DefaultJsonProtocol, JsonParser}
+import spray.json.{DefaultJsonProtocol, JsValue, JsonParser}
 
 
 
@@ -144,12 +144,12 @@ object sparkSteamReConsitution {
       var temp:(String,String,String) = null
       var infoStorage = ""
       if( (infoStorage = isNewDeviceInRedis(deviceMap,prop)) == null && (infoStorage = isNewDeviceInMySQL(deviceMap)) == null ){
-        //
         //新设备
         temp = handleNewLaunchConsumerRecord(deviceMap)
       } else {
         //旧设备 传入redis的数据 写launch表不需要再查询
-        val infoObject = JsonParser(infoStorage).convertTo[redisDeviceInfo]
+        //val infoObject = JsonParser(infoStorage).convertTo[redisDeviceInfo]
+        val infoObject = JsonParser(infoStorage).convertTo[Map[String,String]]
         temp = handleOldLaunchConsumerRecord(deviceMap,infoObject)
       }
 
@@ -216,17 +216,6 @@ object sparkSteamReConsitution {
       }
     }
     val deviceExistInRedis = redisUtil.get(deviceMap("appid") + "-" + deviceMap("oaid")).getOrElse(null)
-    //println(deviceMap("appid") + "-" + deviceMap("oaid"))
-    //println(deviceExistInRedis)
-    if(deviceExistInRedis != null){
-      //如果启动时间不是今天 则更新redis中的启动时间
-      val redisData = deviceExistInRedis.split(",")
-      if(redisData(1) != TODAY){
-
-        val write2Redis = redisUtil.set(deviceMap("appid") + "-" + deviceMap("oaid"), redisData(0) + ',' + TODAY)
-        //TODO 记录写入Redis日志
-      }
-    }
     deviceExistInRedis
   }
 
@@ -320,10 +309,10 @@ object sparkSteamReConsitution {
   /**
    * 处理 launch 通道旧设备的逻辑
    */
-  private def handleOldLaunchConsumerRecord(deviceMap:Map[String,String],obj:redisDeviceInfo) = {
+  private def handleOldLaunchConsumerRecord(deviceMap:Map[String,String],infoObject:Map[String,String]) = {
     ////////////////////旧设备
     val advAscribeInfo:mutable.Map[String,String] = mutable.Map[String,String](deviceMap.toSeq:_*)
-    advAscribeInfo += ("plan_id"->"0","channel_id"->"0")
+    advAscribeInfo += ("plan_id"->infoObject("planid"),"channel_id"->infoObject("channelid"))
 
     //val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
     val connection: Connection = JDBCutil.getConnection
@@ -340,8 +329,14 @@ object sparkSteamReConsitution {
     val launchLogSql = "INSERT INTO log_android_launch(appid, imei_md5, oaid, androidid_md5, mac_md5, ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
     JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
     connection.close()
-    //写入redis  key:appid-oaid  value:设备激活日期,启动更新日期
-    redisUtil.set(advAscribeInfo("appid") + '-' + deviceMap("oaid"), TODAY + ',' + TODAY)
+    //写入redis  key:appid-oaid  value:json
+    val partialDeviceInfoJson =
+      s"""{"activetime":${infoObject("activetime")},
+         |"launchtime":${NOW},
+         |"planid":${advAscribeInfo("plan_id")},
+         |"channelid":${advAscribeInfo("channel_id")}""".stripMargin
+
+    redisUtil.set(advAscribeInfo("appid") + '-' + deviceMap("oaid"), partialDeviceInfoJson)
     (advAscribeInfo("plan_id"),advAscribeInfo("channel_id"),"old")
   }
 

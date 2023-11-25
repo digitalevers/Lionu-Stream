@@ -1,5 +1,5 @@
 import ResultJsonProtocol._
-import spray.json.{JsonFormat, enrichAny}
+import spray.json.{JsonFormat, JsonParser, enrichAny}
 
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -30,7 +30,8 @@ object testJDBC {
     val b = 1
     var c = 3
     var d = 4
-    var sjon = s"""{"activetime":${NOW},"launchtime":NOW,"planid":${a},"channelid":${b}"""
-    println(sjon)
+    var sjon = s"""{"activetime":"${NOW}","launchtime":"${NOW}","planid":"${a}","channelid":"${b}"}"""
+    var map = JsonParser(sjon).convertTo[Map[String,String]]
+    println(map)
   }
 }
