@@ -18,9 +18,8 @@ import java.util.{Date, Properties}
 import scala.collection.mutable
 import scala.util.Try
 import scala.util.control.Breaks._
-import spray.json.{DefaultJsonProtocol, JsonParser, enrichAny}
+import spray.json.{DefaultJsonProtocol, JsonParser}
 
-import scala.collection.mutable.ArrayBuffer
 
 
 
@@ -306,8 +305,14 @@ object sparkSteamReConsitution {
     JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"),advAscribeInfo("imei"),advAscribeInfo("oaid"),advAscribeInfo("androidid"),advAscribeInfo("mac"),advAscribeInfo("ip"),advAscribeInfo("plan_id"),advAscribeInfo("channel_id"),NOW))
     connection.close()
     //json写入redis  key:appid-oaid  value:部分设备信息的json字符串
-    val redisInfo = redisDeviceInfo(NOW,NOW,advAscribeInfo("plan_id"),advAscribeInfo("channel_id"))
-    val partialDeviceInfoJson = redisInfo.toJson.compactPrint
+    //val redisInfo = redisDeviceInfo(NOW,NOW,advAscribeInfo("plan_id"),advAscribeInfo("channel_id"))
+    //val partialDeviceInfoJson = redisInfo.toJson.compactPrint
+    val partialDeviceInfoJson =
+    s"""{"activetime":${NOW},
+       |"launchtime":${NOW},
+       |"planid":${advAscribeInfo("plan_id")},
+       |"channelid":${advAscribeInfo("channel_id")}""".stripMargin
+
     redisUtil.set(advAscribeInfo("appid") + '-' + deviceMap("oaid"), partialDeviceInfoJson)
     (advAscribeInfo("plan_id"),advAscribeInfo("channel_id"),"new")
   }

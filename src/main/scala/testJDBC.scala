@@ -1,9 +1,14 @@
 import ResultJsonProtocol._
 import spray.json.{JsonFormat, enrichAny}
 
+import java.text.SimpleDateFormat
+import java.util.Date
+
 
 
 object testJDBC {
+  private val NOW = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date())
+  private val TODAY = new SimpleDateFormat("yyyy-MM-dd").format(new Date())
   def main(args:Array[String]): Unit = {
 //    try{
 //      val conn = JDBCutil.getConnection
@@ -16,11 +21,16 @@ object testJDBC {
 //        println(ex.getMessage)
 //      }
 //    }
-    case class User(a:Int,b:Int)
-    implicit val userFormat: JsonFormat[User] = jsonFormat2(User)
-    val map = Map('a'->1,'b'->2)
-    val json = map.toJson.compactPrint
-    print(json)
-
+//    case class User(a:Int,b:Int)
+//    implicit val userFormat: JsonFormat[User] = jsonFormat2(User)
+//    val map = Map('a'->1,'b'->2)
+//    val json = map.toJson.compactPrint
+//    print(json)
+    val a = 1
+    val b = 1
+    var c = 3
+    var d = 4
+    var sjon = s"""{"activetime":${NOW},"launchtime":NOW,"planid":${a},"channelid":${b}"""
+    println(sjon)
   }
 }
