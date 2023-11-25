@@ -253,7 +253,8 @@ object sparkSteamReConsitution {
       val launchExistSql = "SELECT launch_time FROM log_android_launch WHERE oaid_md5=? ORDER BY launch_time DESC LIMIT 0,1"
       val launchRes = JDBCutil.executeQuery(connection, launchExistSql, Array(deviceMap("oaid")))
       //旧设备
-       redisDeviceInfo(activeRes(0)(0),launchRes(0)(0),activeRes(0)(1),activeRes(0)(2)).toJson.compactPrint
+       //redisDeviceInfo(activeRes(0)(0),launchRes(0)(0),activeRes(0)(1),activeRes(0)(2)).toJson.compactPrint
+      s"""{"activetime":${activeRes(0)(0)},"launchtime":${launchRes(0)(0)},"planid":${activeRes(0)(1)},"channelid":${activeRes(0)(2)}"""
     }
   }
 

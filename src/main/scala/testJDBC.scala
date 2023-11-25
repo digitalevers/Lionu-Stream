@@ -1,4 +1,6 @@
-import java.util.Properties
+import ResultJsonProtocol._
+import spray.json.{JsonFormat, enrichAny}
+
 
 
 object testJDBC {
@@ -14,8 +16,11 @@ object testJDBC {
 //        println(ex.getMessage)
 //      }
 //    }
-
-
+    case class User(a:Int,b:Int)
+    implicit val userFormat: JsonFormat[User] = jsonFormat2(User)
+    val map = Map('a'->1,'b'->2)
+    val json = map.toJson.compactPrint
+    print(json)
 
   }
 }
