@@ -24,13 +24,13 @@ import spray.json.{DefaultJsonProtocol, JsValue, JsonParser}
 
 
 //定义对应json的实体类
-case class redisDeviceInfo
-(
-  activetime:String,
-  launchtime:String,
-  planid:String,
-  channelid:String
-)
+//case class redisDeviceInfo
+//(
+//  activetime:String,
+//  launchtime:String,
+//  planid:String,
+//  channelid:String
+//)
 
 case class launchDeviceInfo(
                              androidid:String,
@@ -93,7 +93,7 @@ case class payDeviceInfo(
 
 //定义解析协议
 object ResultJsonProtocol extends DefaultJsonProtocol {
-  implicit val redisDeviceInfoFormat = jsonFormat(redisDeviceInfo,"activetime","launchtime","planid","channedid")
+  //implicit val redisDeviceInfoFormat = jsonFormat(redisDeviceInfo,"activetime","launchtime","planid","channedid")
   implicit val launchDeviceInfoFormat = jsonFormat(launchDeviceInfo,"androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
   implicit val regDeviceInfoFormat = jsonFormat(regDeviceInfo,"androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
   implicit val payDeviceInfoFormat = jsonFormat(payDeviceInfo, "amount", "androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
@@ -139,25 +139,35 @@ object sparkSteamReConsitution {
     val wordStream = kafkaDStream.map(x=>{
       //println(x.topic)
       val deviceMap  = getCCParams(JsonParser(x.value).convertTo[launchDeviceInfo])
-      println(deviceMap)
+      //println(deviceMap)
 
-      var temp:(String,String,String) = null
-      var infoStorage = ""
-      if( (infoStorage = isNewDeviceInRedis(deviceMap,prop)) == null && (infoStorage = isNewDeviceInMySQL(deviceMap)) == null ){
-        //新设备
-        temp = handleNewLaunchConsumerRecord(deviceMap)
+
+      var planInfo:(String,String,String) = null            //计划id,渠道id,新旧设备标识
+      var infoStorage = isNewDeviceInRedis(deviceMap,prop)  //返回 Redis 中存放的设备信息(激活时间，登录时间，计划id，渠道id)
+      if( infoStorage == null ){
+        infoStorage =  isNewDeviceInMySQL(deviceMap)        //返回 MySQL 中存放的设备信息(激活时间，登录时间，计划id，渠道id)
+        if(infoStorage == null){
+          //新设备
+          planInfo = handleNewLaunchConsumerRecord(deviceMap)
+        } else {
+          //println(infoStorage)
+          val infoMap = JsonParser(infoStorage).convertTo[Map[String, String]]
+          planInfo = handleOldLaunchConsumerRecord(deviceMap, infoMap)
+        }
       } else {
         //旧设备 传入redis的数据 写launch表不需要再查询
         //val infoObject = JsonParser(infoStorage).convertTo[redisDeviceInfo]
+        //println(infoStorage)
         val infoObject = JsonParser(infoStorage).convertTo[Map[String,String]]
-        temp = handleOldLaunchConsumerRecord(deviceMap,infoObject)
+        planInfo = handleOldLaunchConsumerRecord(deviceMap,infoObject)
       }
 
-      println((temp,infoStorage))
-      (temp,infoStorage)
+      //println((planInfo,infoStorage))
+      (planInfo,infoStorage)
     }).reduceByKey(_+_).foreachRDD(rdd=>{
         rdd.foreachPartition(data=>{
-          launchData(data,prop)
+          println(data)
+          //launchData(data,prop)
         })
       }
     )
@@ -200,7 +210,7 @@ object sparkSteamReConsitution {
    * @param prop 属性参数
    * @return deviceExistInRedis
    *         新设备返回null
-   *         旧设备返回保存在redis中的激活信息 格式为《激活时间,最近启动时间》
+   *         旧设备返回保存在redis中的激活信息
    *
    */
   private def isNewDeviceInRedis(deviceMap:Map[String,Any],prop:Properties) = {
@@ -228,21 +238,21 @@ object sparkSteamReConsitution {
    * @return deviceExistInMySQL
    *         新设备返回null
    *         旧设备返回保存在 MySQL 中的激活信息 格式为 "激活时间,最近启动时间"
-   * TODO 根据设备类型是Android还是iOS查找对应的数据库表
+   *         TODO 根据设备类型是Android还是iOS查找对应的数据库表
    */
-  private def isNewDeviceInMySQL(deviceMap:Map[String,Any]) =  {
+  private def isNewDeviceInMySQL(deviceMap: Map[String, Any]): String = {
     val connection: Connection = JDBCutil.getConnection
     val activeExistSql = "SELECT active_time,plan_id,channel_id FROM log_android_active WHERE oaid_md5=? ORDER BY active_time LIMIT 0,1"
     val activeRes = JDBCutil.executeQuery(connection, activeExistSql, Array(deviceMap("oaid")))
-    if(activeRes.length == 0){
+    if (activeRes.length == 0) {
       //新设备
-       null
+      null
     } else {
       val launchExistSql = "SELECT launch_time FROM log_android_launch WHERE oaid_md5=? ORDER BY launch_time DESC LIMIT 0,1"
       val launchRes = JDBCutil.executeQuery(connection, launchExistSql, Array(deviceMap("oaid")))
       //旧设备
-       //redisDeviceInfo(activeRes(0)(0),launchRes(0)(0),activeRes(0)(1),activeRes(0)(2)).toJson.compactPrint
-      s"""{"activetime":${activeRes(0)(0)},"launchtime":${launchRes(0)(0)},"planid":${activeRes(0)(1)},"channelid":${activeRes(0)(2)}"""
+      //redisDeviceInfo(activeRes(0)(0),launchRes(0)(0),activeRes(0)(1),activeRes(0)(2)).toJson.compactPrint
+      s"""{"activetime":"${activeRes(0)(0)}","launchtime":"${launchRes(0)(0)}","planid":"${activeRes(0)(1)}","channelid":"${activeRes(0)(2)}"}"""
     }
   }
 
@@ -297,10 +307,10 @@ object sparkSteamReConsitution {
     //val redisInfo = redisDeviceInfo(NOW,NOW,advAscribeInfo("plan_id"),advAscribeInfo("channel_id"))
     //val partialDeviceInfoJson = redisInfo.toJson.compactPrint
     val partialDeviceInfoJson =
-    s"""{"activetime":${NOW},
-       |"launchtime":${NOW},
+    s"""{"activetime":"${NOW}",
+       |"launchtime":"${NOW}",
        |"planid":${advAscribeInfo("plan_id")},
-       |"channelid":${advAscribeInfo("channel_id")}""".stripMargin
+       |"channelid":${advAscribeInfo("channel_id")}}""".stripMargin
 
     redisUtil.set(advAscribeInfo("appid") + '-' + deviceMap("oaid"), partialDeviceInfoJson)
     (advAscribeInfo("plan_id"),advAscribeInfo("channel_id"),"new")
@@ -313,28 +323,18 @@ object sparkSteamReConsitution {
     ////////////////////旧设备
     val advAscribeInfo:mutable.Map[String,String] = mutable.Map[String,String](deviceMap.toSeq:_*)
     advAscribeInfo += ("plan_id"->infoObject("planid"),"channel_id"->infoObject("channelid"))
-
     //val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
     val connection: Connection = JDBCutil.getConnection
-//    val sql = "SELECT * FROM log_android_active WHERE appid=? AND oaid_md5=?"
-//    val prep = connection.prepareStatement(sql)
-//    prep.setString(1,deviceMap("appid"))
-//    prep.setString(2,deviceMap("oaid"))
-//    val res = prep.executeQuery
-//    while (res.next()) {
-//      advAscribeInfo("plan_id") = res.getString("plan_id")
-//      advAscribeInfo("channel_id") = res.getString("channel_id")
-//    }
     //写入启动表 （旧设备写入）
-    val launchLogSql = "INSERT INTO log_android_launch(appid, imei_md5, oaid, androidid_md5, mac_md5, ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
+    val launchLogSql = "INSERT INTO log_android_launch(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
     JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
     connection.close()
     //写入redis  key:appid-oaid  value:json
     val partialDeviceInfoJson =
-      s"""{"activetime":${infoObject("activetime")},
-         |"launchtime":${NOW},
+      s"""{"activetime":"${infoObject("activetime")}",
+         |"launchtime":"${NOW}",
          |"planid":${advAscribeInfo("plan_id")},
-         |"channelid":${advAscribeInfo("channel_id")}""".stripMargin
+         |"channelid":${advAscribeInfo("channel_id")}}""".stripMargin
 
     redisUtil.set(advAscribeInfo("appid") + '-' + deviceMap("oaid"), partialDeviceInfoJson)
     (advAscribeInfo("plan_id"),advAscribeInfo("channel_id"),"old")

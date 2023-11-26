@@ -1,4 +1,5 @@
 import ResultJsonProtocol._
+import sparkSteamReConsitution.{isNewDeviceInMySQL, isNewDeviceInRedis}
 import spray.json.{JsonFormat, JsonParser, enrichAny}
 
 import java.text.SimpleDateFormat
@@ -26,12 +27,31 @@ object testJDBC {
 //    val map = Map('a'->1,'b'->2)
 //    val json = map.toJson.compactPrint
 //    print(json)
-    val a = 1
-    val b = 1
-    var c = 3
-    var d = 4
-    var sjon = s"""{"activetime":"${NOW}","launchtime":"${NOW}","planid":"${a}","channelid":"${b}"}"""
-    var map = JsonParser(sjon).convertTo[Map[String,String]]
-    println(map)
+
+//    val a = 1
+//    val b = 1
+//    var c = 3
+//    var d = 4
+//    var sjon = s"""{"activetime":"${NOW}","launchtime":"${NOW}","planid":"${a}","channelid":"${b}"}"""
+//    var map = JsonParser(sjon).convertTo[Map[String,String]]
+//    println(map)
+    var infoStorage = 0
+    if( (infoStorage = fun1()) == () ){
+      println("ok")
+    } else {
+      println("hello")
+      var infoStorage = fun1()
+      println(infoStorage = fun1())
+    }
+  }
+
+  def fun1() = {
+    //println("fun1")
+    123
+  }
+
+  def fun2() = {
+    println("fun2")
+    s"""{"a":1,"b":2}"""
   }
 }
