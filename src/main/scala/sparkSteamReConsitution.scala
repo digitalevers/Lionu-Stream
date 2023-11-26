@@ -139,7 +139,7 @@ object sparkSteamReConsitution {
     val wordStream = kafkaDStream.map(x=>{
       //println(x.topic)
       val deviceOriginMap  = getCCParams(JsonParser(x.value).convertTo[launchDeviceInfo])
-      //println(deviceMap)
+      //println(deviceOriginMap)
 
       var advAscribeInfo:Map[String,Any] = null                                //返回的归因信息
       var infoStorage = isNewDeviceInRedis(deviceOriginMap,prop)        //返回 Redis 中存放的json信息(激活时间，登录时间，计划id，渠道id)
@@ -293,11 +293,11 @@ object sparkSteamReConsitution {
       }
     }
     //写入激活表
-    val insertActiveSql = "INSERT INTO log_android_active(appid, imei_md5, oaid, androidid_md5, mac_md5, ip, plan_id, channel_id, active_time) VALUES(?,?,?,?,?,?,?,?,?)"
+    val insertActiveSql = "INSERT INTO log_android_active(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, plan_id, channel_id, active_time) VALUES(?,?,?,?,?,?,?,?,?)"
     JDBCutil.executeUpdate(connection, insertActiveSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
 
     //写入启动表
-    val launchLogSql = "INSERT INTO log_android_launch(appid, imei_md5, oaid, androidid_md5, mac_md5, ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
+    val launchLogSql = "INSERT INTO log_android_launch(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
     JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"),advAscribeInfo("imei"),advAscribeInfo("oaid"),advAscribeInfo("androidid"),advAscribeInfo("mac"),advAscribeInfo("ip"),advAscribeInfo("plan_id"),advAscribeInfo("channel_id"),NOW))
     connection.close()
 
@@ -308,7 +308,14 @@ object sparkSteamReConsitution {
     s"""{"activetime":"${NOW}","launchtime":"${NOW}","planid":"${advAscribeInfo("plan_id")}","channelid":"${advAscribeInfo("channel_id")}"}"""
 
     redisUtil.set(advAscribeInfo("appid") + '-' + deviceMap("oaid"), partialDeviceInfoJson)
-    Map("activetime"->NOW,"launchtime"->NOW,"planid"->advAscribeInfo("plan_id"),"channelid"->advAscribeInfo("channel_id"),"new"->1)
+    Map(
+      "appid"->advAscribeInfo("appid"),
+      "activetime"->NOW,
+      "launchtime"->NOW,
+      "planid"->advAscribeInfo("plan_id"),
+      "channelid"->advAscribeInfo("channel_id"),
+      "new"->1
+    )
   }
 
   /**
@@ -329,8 +336,14 @@ object sparkSteamReConsitution {
       s"""{"activetime":"${infoStorageMap("activetime")}","launchtime":"${NOW}","planid":"${advAscribeInfo("plan_id")}","channelid":"${advAscribeInfo("channel_id")}"}"""
 
     redisUtil.set(advAscribeInfo("appid") + '-' + deviceMap("oaid"), partialDeviceInfoJson)
-    Map("activetime"->infoStorageMap("activetime"),"launchtime"->NOW,
-      "planid"->advAscribeInfo("plan_id"),"channelid"->advAscribeInfo("channel_id"),"new"->0)
+    Map(
+      "appid"->advAscribeInfo("appid"),
+      "activetime"->infoStorageMap("activetime"),
+      "launchtime"->NOW,
+      "planid"->advAscribeInfo("plan_id"),
+      "channelid"->advAscribeInfo("channel_id"),
+      "new"->0
+    )
   }
 
   /**
@@ -469,9 +482,9 @@ object sparkSteamReConsitution {
             if (row("new") == 0) {
               throw new Exception("计划数据写入异常")
             } else {
-              val insertSql = "INSERT INTO statistics_base(plan_id,channel_id,launch_count,active_count,stat_date) VALUES(?,?,?,?,?)"
+              val insertSql = "INSERT INTO statistics_base(app_id,plan_id,channel_id,launch_count,active_count,stat_date) VALUES(?,?,?,?,?,?)"
               //println(insertSql)
-              JDBCutil.executeUpdate(connection,insertSql,Array(row("planid"), row("channelid"), 1, 1, TODAY))
+              JDBCutil.executeUpdate(connection,insertSql,Array(row("appid"), row("planid"), row("channelid"), 1, 1, TODAY))
             }
           }
           //计划基础数据更新和添加 end
