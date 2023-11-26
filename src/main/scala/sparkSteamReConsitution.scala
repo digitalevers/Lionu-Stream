@@ -138,32 +138,31 @@ object sparkSteamReConsitution {
     val kafkaDStream = KafkaUtils.createDirectStream(streamingContext,LocationStrategies.PreferConsistent,Subscribe[String,String](launchKafkaParams._1, launchKafkaParams._2))
     val wordStream = kafkaDStream.map(x=>{
       //println(x.topic)
-      val deviceMap  = getCCParams(JsonParser(x.value).convertTo[launchDeviceInfo])
+      val deviceOriginMap  = getCCParams(JsonParser(x.value).convertTo[launchDeviceInfo])
       //println(deviceMap)
 
-
-      var planInfo:(String,String,String) = null            //计划id,渠道id,新旧设备标识
-      var infoStorage = isNewDeviceInRedis(deviceMap,prop)  //返回 Redis 中存放的设备信息(激活时间，登录时间，计划id，渠道id)
+      var advAscribeInfo:Map[String,Any] = null                                //返回的归因信息
+      var infoStorage = isNewDeviceInRedis(deviceOriginMap,prop)        //返回 Redis 中存放的json信息(激活时间，登录时间，计划id，渠道id)
       if( infoStorage == null ){
-        infoStorage =  isNewDeviceInMySQL(deviceMap)        //返回 MySQL 中存放的设备信息(激活时间，登录时间，计划id，渠道id)
+        infoStorage =  isNewDeviceInMySQL(deviceOriginMap)              //查找 MySQL 中返回json(激活时间，登录时间，计划id，渠道id)
         if(infoStorage == null){
           //新设备
-          planInfo = handleNewLaunchConsumerRecord(deviceMap)
+          advAscribeInfo = handleNewLaunchConsumerRecord(deviceOriginMap)
         } else {
-          //println(infoStorage)
-          val infoMap = JsonParser(infoStorage).convertTo[Map[String, String]]
-          planInfo = handleOldLaunchConsumerRecord(deviceMap, infoMap)
+          //旧设备
+          val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String, String]]
+          advAscribeInfo = handleOldLaunchConsumerRecord(deviceOriginMap, infoStorageMap)
         }
       } else {
         //旧设备 传入redis的数据 写launch表不需要再查询
         //val infoObject = JsonParser(infoStorage).convertTo[redisDeviceInfo]
         //println(infoStorage)
-        val infoObject = JsonParser(infoStorage).convertTo[Map[String,String]]
-        planInfo = handleOldLaunchConsumerRecord(deviceMap,infoObject)
+        val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String,String]]
+        advAscribeInfo = handleOldLaunchConsumerRecord(deviceOriginMap,infoStorageMap)
       }
 
-      //println((planInfo,infoStorage))
-      (planInfo,infoStorage)
+      println(advAscribeInfo)
+      advAscribeInfo
     }).foreachRDD(rdd=>{
         rdd.foreachPartition(iter=>{
           launchData(iter)
@@ -301,23 +300,24 @@ object sparkSteamReConsitution {
     val launchLogSql = "INSERT INTO log_android_launch(appid, imei_md5, oaid, androidid_md5, mac_md5, ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
     JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"),advAscribeInfo("imei"),advAscribeInfo("oaid"),advAscribeInfo("androidid"),advAscribeInfo("mac"),advAscribeInfo("ip"),advAscribeInfo("plan_id"),advAscribeInfo("channel_id"),NOW))
     connection.close()
-    //json写入redis  key:appid-oaid  value:部分设备信息的json字符串
+
+    //写入Redis  key:appid-oaid  value:部分设备信息的json字符串
     //val redisInfo = redisDeviceInfo(NOW,NOW,advAscribeInfo("plan_id"),advAscribeInfo("channel_id"))
     //val partialDeviceInfoJson = redisInfo.toJson.compactPrint
     val partialDeviceInfoJson =
     s"""{"activetime":"${NOW}","launchtime":"${NOW}","planid":"${advAscribeInfo("plan_id")}","channelid":"${advAscribeInfo("channel_id")}"}"""
 
     redisUtil.set(advAscribeInfo("appid") + '-' + deviceMap("oaid"), partialDeviceInfoJson)
-    (advAscribeInfo("plan_id"),advAscribeInfo("channel_id"),"new")
+    Map("activetime"->NOW,"launchtime"->NOW,"planid"->advAscribeInfo("plan_id"),"channelid"->advAscribeInfo("channel_id"),"new"->1)
   }
 
   /**
    * 处理 launch 通道旧设备的逻辑
    */
-  private def handleOldLaunchConsumerRecord(deviceMap:Map[String,String],infoObject:Map[String,String]) = {
+  private def handleOldLaunchConsumerRecord(deviceMap:Map[String,String],infoStorageMap:Map[String,String]) = {
     ////////////////////旧设备
     val advAscribeInfo:mutable.Map[String,String] = mutable.Map[String,String](deviceMap.toSeq:_*)
-    advAscribeInfo += ("plan_id"->infoObject("planid"),"channel_id"->infoObject("channelid"))
+    advAscribeInfo += ("plan_id"->infoStorageMap("planid"),"channel_id"->infoStorageMap("channelid"))
     //val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
     val connection: Connection = JDBCutil.getConnection
     //写入启动表 （旧设备写入）
@@ -326,10 +326,11 @@ object sparkSteamReConsitution {
     connection.close()
     //写入redis  key:appid-oaid  value:json
     val partialDeviceInfoJson =
-      s"""{"activetime":"${infoObject("activetime")}","launchtime":"${NOW}","planid":"${advAscribeInfo("plan_id")}","channelid":"${advAscribeInfo("channel_id")}"}"""
+      s"""{"activetime":"${infoStorageMap("activetime")}","launchtime":"${NOW}","planid":"${advAscribeInfo("plan_id")}","channelid":"${advAscribeInfo("channel_id")}"}"""
 
     redisUtil.set(advAscribeInfo("appid") + '-' + deviceMap("oaid"), partialDeviceInfoJson)
-    (advAscribeInfo("plan_id"),advAscribeInfo("channel_id"),"old")
+    Map("activetime"->infoStorageMap("activetime"),"launchtime"->NOW,
+      "planid"->advAscribeInfo("plan_id"),"channelid"->advAscribeInfo("channel_id"),"new"->0)
   }
 
   /**
@@ -435,7 +436,7 @@ object sparkSteamReConsitution {
   /**
    * launch通道 基础和留存数据的统计
    */
-  private def launchData(data:Iterator[((String,String,String),String)]) = {
+  private def launchData(data:Iterator[Map[String,Any]]) = {
     Try {
       //val connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
       val connection: Connection = JDBCutil.getConnection
@@ -449,42 +450,40 @@ object sparkSteamReConsitution {
         val statPrepRet = connection.prepareStatement(planExistSqlRet)
 
         for (row <- data) {
-          //print(row._1 + "|" + row._2)
           //计划基础数据更新和添加 start
-          statPrep.setString(1, row._1._1)
+          statPrep.setString(1, row("planid").toString)
           statPrep.setString(2, TODAY)
           val res = statPrep.executeQuery
           if (res.next()) {
             //如果该计划已有该天的统计记录  则进行数据更新
             var updatePrep: PreparedStatement = null
-            if (row._1._3 == "old") {
+            if (row("new") == 0) {
               val updateSql = "UPDATE statistics_base SET launch_count=launch_count+? WHERE plan_id=?"
-              JDBCutil.executeUpdate(connection,updateSql,Array(1, row._1._1))
+              JDBCutil.executeUpdate(connection,updateSql,Array(1, row("planid")))
             } else {
               val updateSql = "UPDATE statistics_base SET launch_count=launch_count+?,active_count=active_count+? WHERE plan_id=?"
-              JDBCutil.executeUpdate(connection,updateSql,Array(1, 1, row._1._1))
+              JDBCutil.executeUpdate(connection,updateSql,Array(1, 1, row("planid")))
             }
           } else {
             //如果该计划没有该天的统计数据  则写入一条统计记录
-            if (row._1._3 == "old") {
+            if (row("new") == 0) {
               throw new Exception("计划数据写入异常")
             } else {
               val insertSql = "INSERT INTO statistics_base(plan_id,channel_id,launch_count,active_count,stat_date) VALUES(?,?,?,?,?)"
               //println(insertSql)
-              JDBCutil.executeUpdate(connection,insertSql,Array(row._1._1, row._1._2, 1, 1, TODAY))
+              JDBCutil.executeUpdate(connection,insertSql,Array(row("planid"), row("channelid"), 1, 1, TODAY))
             }
           }
           //计划基础数据更新和添加 end
 
           //留存start
           //旧设备才会有留存数据
-          if(row._1._3 == "old"){
-            val deviceInfoMap = JsonParser(row._2).convertTo[Map[String, String]]
-            val active_day = new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("yyyy-MM-dd").parse(deviceInfoMap("activetime")))
-            val launch_day = new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("yyyy-MM-dd").parse(deviceInfoMap("launchtime")))
+          if(row("new") == 0){
+            val active_day = new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("yyyy-MM-dd").parse(row("activetime").toString))
+            val launch_day = new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("yyyy-MM-dd").parse(row("launchtime").toString))
             //激活日期和启动日期都不是当天的才会有留存数据
             if(active_day != TODAY && launch_day != TODAY){
-              statPrepRet.setString(1, row._1._1)
+              statPrepRet.setString(1, row("planid").toString)
               statPrepRet.setString(2, active_day)
               //计算留存天数
               val retention_days = diffDays(active_day,TODAY)
@@ -493,10 +492,10 @@ object sparkSteamReConsitution {
               //查询留存记录表中是否存在记录 有记录更新 无记录写入
               if(resRet.next()){
                 val updateSql = "UPDATE statistics_retention SET retention_count=retention_count+? WHERE plan_id=? AND active_day=? AND retention_days=?"
-                JDBCutil.executeUpdate(connection,updateSql,Array(1,row._1._1,active_day,retention_days))
+                JDBCutil.executeUpdate(connection,updateSql,Array(1,row("planid"),active_day,retention_days))
               } else {
                 val insertSql = "INSERT INTO statistics_retention(plan_id,channel_id,retention_count,retention_days,active_day) VALUES(?,?,?,?,?)"
-                JDBCutil.executeUpdate(connection,insertSql,Array(row._1._1, row._1._2, 1, retention_days, active_day))
+                JDBCutil.executeUpdate(connection,insertSql,Array(row("planid"), row("channelid"), 1, retention_days, active_day))
               }
             }
           }
