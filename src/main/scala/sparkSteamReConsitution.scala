@@ -165,13 +165,15 @@ object sparkSteamReConsitution {
       //println((planInfo,infoStorage))
       (planInfo,infoStorage)
     }).reduceByKey(_+_).foreachRDD(rdd=>{
-        rdd.foreachPartition(data=>{
-          println(data)
-          //launchData(data,prop)
+        rdd.foreachPartition(iter=>{
+          iter.foreach(data=>{
+            println(data)
+            //launchData(data,prop)
+          })
+
         })
       }
     )
-
 
 
     // 2.付费topic
@@ -309,8 +311,8 @@ object sparkSteamReConsitution {
     val partialDeviceInfoJson =
     s"""{"activetime":"${NOW}",
        |"launchtime":"${NOW}",
-       |"planid":${advAscribeInfo("plan_id")},
-       |"channelid":${advAscribeInfo("channel_id")}}""".stripMargin
+       |"planid":"${advAscribeInfo("plan_id")}",
+       |"channelid":"${advAscribeInfo("channel_id")}"}""".stripMargin
 
     redisUtil.set(advAscribeInfo("appid") + '-' + deviceMap("oaid"), partialDeviceInfoJson)
     (advAscribeInfo("plan_id"),advAscribeInfo("channel_id"),"new")
@@ -333,8 +335,8 @@ object sparkSteamReConsitution {
     val partialDeviceInfoJson =
       s"""{"activetime":"${infoObject("activetime")}",
          |"launchtime":"${NOW}",
-         |"planid":${advAscribeInfo("plan_id")},
-         |"channelid":${advAscribeInfo("channel_id")}}""".stripMargin
+         |"planid":"${advAscribeInfo("plan_id")}",
+         |"channelid":"${advAscribeInfo("channel_id")}"}""".stripMargin
 
     redisUtil.set(advAscribeInfo("appid") + '-' + deviceMap("oaid"), partialDeviceInfoJson)
     (advAscribeInfo("plan_id"),advAscribeInfo("channel_id"),"old")
