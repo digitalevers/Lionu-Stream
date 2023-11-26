@@ -164,13 +164,9 @@ object sparkSteamReConsitution {
 
       //println((planInfo,infoStorage))
       (planInfo,infoStorage)
-    }).reduceByKey(_+_).foreachRDD(rdd=>{
+    }).foreachRDD(rdd=>{
         rdd.foreachPartition(iter=>{
-          iter.foreach(data=>{
-            println(data)
-            //launchData(data,prop)
-          })
-
+          launchData(iter)
         })
       }
     )
@@ -187,14 +183,14 @@ object sparkSteamReConsitution {
       var temp: (String, String, String) = null
       if (statusInRedis == null) {
         //新设备
-        temp = handleNewPayConsumerRecord(deviceMap, prop)
+        temp = handleNewPayConsumerRecord(deviceMap)
         //throw new Exception("pay通道比launch通道先处理")
       } else {
         //旧设备
-        temp = handleOldPayConsumerRecord(deviceMap, prop)
+        temp = handleOldPayConsumerRecord(deviceMap)
       }
       (temp, statusInRedis)
-    }).reduceByKey(_ + _).foreachRDD(rdd => {
+    }).foreachRDD(rdd => {
       rdd.foreachPartition(data => {
         //println("pay")
         payData(data, prop)
@@ -309,10 +305,7 @@ object sparkSteamReConsitution {
     //val redisInfo = redisDeviceInfo(NOW,NOW,advAscribeInfo("plan_id"),advAscribeInfo("channel_id"))
     //val partialDeviceInfoJson = redisInfo.toJson.compactPrint
     val partialDeviceInfoJson =
-    s"""{"activetime":"${NOW}",
-       |"launchtime":"${NOW}",
-       |"planid":"${advAscribeInfo("plan_id")}",
-       |"channelid":"${advAscribeInfo("channel_id")}"}""".stripMargin
+    s"""{"activetime":"${NOW}","launchtime":"${NOW}","planid":"${advAscribeInfo("plan_id")}","channelid":"${advAscribeInfo("channel_id")}"}"""
 
     redisUtil.set(advAscribeInfo("appid") + '-' + deviceMap("oaid"), partialDeviceInfoJson)
     (advAscribeInfo("plan_id"),advAscribeInfo("channel_id"),"new")
@@ -333,10 +326,7 @@ object sparkSteamReConsitution {
     connection.close()
     //写入redis  key:appid-oaid  value:json
     val partialDeviceInfoJson =
-      s"""{"activetime":"${infoObject("activetime")}",
-         |"launchtime":"${NOW}",
-         |"planid":"${advAscribeInfo("plan_id")}",
-         |"channelid":"${advAscribeInfo("channel_id")}"}""".stripMargin
+      s"""{"activetime":"${infoObject("activetime")}","launchtime":"${NOW}","planid":"${advAscribeInfo("plan_id")}","channelid":"${advAscribeInfo("channel_id")}"}"""
 
     redisUtil.set(advAscribeInfo("appid") + '-' + deviceMap("oaid"), partialDeviceInfoJson)
     (advAscribeInfo("plan_id"),advAscribeInfo("channel_id"),"old")
@@ -347,7 +337,7 @@ object sparkSteamReConsitution {
    * 实际生产中 这段逻辑被调用的概率应该很低
    * 因为正常来说 launch 通道的数据肯定会较 pay 通道的数据先得到处理
    */
-  private def handleNewPayConsumerRecord(deviceMap:Map[String,String],prop:Properties) = {
+  private def handleNewPayConsumerRecord(deviceMap:Map[String,String]) = {
     //查找条件优先级 imei->oaid->android_id->mac->ip
     val sqls = mutable.LinkedHashMap[String,String](
       "imei"     ->"SELECT  * FROM log_android_click_data WHERE imei_md5=?",
@@ -407,7 +397,7 @@ object sparkSteamReConsitution {
    * 处理 pay 通道旧设备的逻辑
    * TODO 计划信息应该直接在Redis中读取 不再从数据库中读取
    */
-  private def handleOldPayConsumerRecord(deviceMap:Map[String,String],prop:Properties) = {
+  private def handleOldPayConsumerRecord(deviceMap:Map[String,String]) = {
     ////////////////////旧设备
     val advAscribeInfo:mutable.Map[String,String] = mutable.Map[String,String](deviceMap.toSeq:_*)  //immutable 转 mutable
     advAscribeInfo += ("plan_id"->"0","channel_id"->"0")
@@ -445,7 +435,7 @@ object sparkSteamReConsitution {
   /**
    * launch通道 基础和留存数据的统计
    */
-  private def launchData(data:Iterator[((String,String,String),String)],prop:Properties) = {
+  private def launchData(data:Iterator[((String,String,String),String)]) = {
     Try {
       //val connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
       val connection: Connection = JDBCutil.getConnection
@@ -459,7 +449,7 @@ object sparkSteamReConsitution {
         val statPrepRet = connection.prepareStatement(planExistSqlRet)
 
         for (row <- data) {
-          print(row._1 + "|" + row._2)
+          //print(row._1 + "|" + row._2)
           //计划基础数据更新和添加 start
           statPrep.setString(1, row._1._1)
           statPrep.setString(2, TODAY)
@@ -489,9 +479,9 @@ object sparkSteamReConsitution {
           //留存start
           //旧设备才会有留存数据
           if(row._1._3 == "old"){
-            val arr = row._2.split(",")
-            val active_day  = arr(0)
-            val launch_day = arr(1)
+            val deviceInfoMap = JsonParser(row._2).convertTo[Map[String, String]]
+            val active_day = new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("yyyy-MM-dd").parse(deviceInfoMap("activetime")))
+            val launch_day = new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("yyyy-MM-dd").parse(deviceInfoMap("launchtime")))
             //激活日期和启动日期都不是当天的才会有留存数据
             if(active_day != TODAY && launch_day != TODAY){
               statPrepRet.setString(1, row._1._1)

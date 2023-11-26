@@ -3,7 +3,7 @@ import sparkSteamReConsitution.{isNewDeviceInMySQL, isNewDeviceInRedis}
 import spray.json.{JsonFormat, JsonParser, enrichAny}
 
 import java.text.SimpleDateFormat
-import java.util.Date
+import java.util.{Calendar, Date}
 
 
 
@@ -35,14 +35,11 @@ object testJDBC {
 //    var sjon = s"""{"activetime":"${NOW}","launchtime":"${NOW}","planid":"${a}","channelid":"${b}"}"""
 //    var map = JsonParser(sjon).convertTo[Map[String,String]]
 //    println(map)
-    var infoStorage = 0
-    if( (infoStorage = fun1()) == () ){
-      println("ok")
-    } else {
-      println("hello")
-      var infoStorage = fun1()
-      println(infoStorage = fun1())
-    }
+
+    val date = new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("yyyy-MM-dd").parse("2023-11-22 10:13:08"))
+
+
+    println(date)
   }
 
   def fun1() = {
