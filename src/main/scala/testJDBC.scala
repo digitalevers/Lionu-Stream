@@ -2,10 +2,18 @@ import ResultJsonProtocol._
 import sparkSteamReConsitution.{isNewDeviceInMySQL, isNewDeviceInRedis}
 import spray.json.{JsonFormat, JsonParser, enrichAny}
 
+import java.lang.reflect.Field
 import java.text.SimpleDateFormat
 import java.util.{Calendar, Date}
 
+class User{
+  private val name ="lucy"
+  private val age = 20
 
+  def getAge(): Unit = {
+
+  }
+}
 
 object testJDBC {
   private val NOW = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date())
@@ -35,16 +43,30 @@ object testJDBC {
 //    var sjon = s"""{"activetime":"${NOW}","launchtime":"${NOW}","planid":"${a}","channelid":"${b}"}"""
 //    var map = JsonParser(sjon).convertTo[Map[String,String]]
 //    println(map)
+    val user = new User
+    println(this.getCCParams(user))
 
-    val m = Map.empty[String, String]
-    val m1 = m + ("name"->1)
-    println(m1)
   }
 
-  def fun1() = {
+  def fun1(a: Map[String, String], f: Field) = {
     //println("fun1")
-    123
+
   }
+
+
+  def getCCParams(cc: AnyRef) = {
+
+    cc.getClass.getDeclaredFields.foldLeft(Map[String, String]())((x,y)=>{
+      y.setAccessible(true)
+      x + (y.getName -> y.get(cc).toString)
+    })
+
+    cc.getClass.getDeclaredFields.foldLeft(Map[String, String]()) {
+      (x,y) => y.setAccessible(true)
+      x + (y.getName -> y.get(cc).toString)
+    }
+  }
+
 
   def fun2() = {
     println("fun2")

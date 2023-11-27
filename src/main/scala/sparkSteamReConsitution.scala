@@ -138,7 +138,8 @@ object sparkSteamReConsitution {
     val kafkaDStream = KafkaUtils.createDirectStream(streamingContext,LocationStrategies.PreferConsistent,Subscribe[String,String](launchKafkaParams._1, launchKafkaParams._2))
     val wordStream = kafkaDStream.map(x=>{
       //println(x.topic)
-      val deviceOriginMap  = getCCParams(JsonParser(x.value).convertTo[launchDeviceInfo])
+      //val deviceOriginMap  = getObjectProperties(JsonParser(x.value).convertTo[launchDeviceInfo])
+      val deviceOriginMap  = JsonParser(x.value).convertTo[Map[String,String]]
       //println(deviceOriginMap)
 
       var advAscribeInfo:Map[String,Any] = null                                //返回的归因信息
@@ -178,7 +179,8 @@ object sparkSteamReConsitution {
     val kafkaDStreamForPay = KafkaUtils.createDirectStream(streamingContext, LocationStrategies.PreferConsistent, Subscribe[String, String](payKafkaParams._1, payKafkaParams._2))
     kafkaDStreamForPay.map(x => {
       //println(x.value)
-      val deviceOriginMap = getCCParams(JsonParser(x.value).convertTo[payDeviceInfo])
+      //val deviceOriginMap = getObjectProperties(JsonParser(x.value).convertTo[payDeviceInfo])
+      val deviceOriginMap  = JsonParser(x.value).convertTo[Map[String,String]]
       var advAscribeInfo:Map[String,Any] = null
       var infoStorage = isNewDeviceInRedis(deviceOriginMap, prop)
       if (infoStorage == null) {
@@ -584,13 +586,13 @@ object sparkSteamReConsitution {
   }
 
   /**
-   * 提取对象obj的属性值 以map的形式返回 ???
+   * 提取对象obj的属性值 以map的形式返回
    * @param cc
    * @return
    */
-  def getCCParams(cc: AnyRef) = {
-    cc.getClass.getDeclaredFields.foldLeft(Map[String, String]()) { (a, f) =>
-      f.setAccessible(true)
+  def getObjectProperties(cc: AnyRef) = {
+    cc.getClass.getDeclaredFields.foldLeft(Map[String, String]()) {
+      (a, f) => f.setAccessible(true)
       a + (f.getName -> f.get(cc).toString)
     }
   }
