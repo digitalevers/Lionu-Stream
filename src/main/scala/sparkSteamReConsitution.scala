@@ -160,8 +160,7 @@ object sparkSteamReConsitution {
         val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String,String]]
         advAscribeInfo = handleOldLaunchConsumerRecord(deviceOriginMap,infoStorageMap)
       }
-
-      println(advAscribeInfo)
+      //println(advAscribeInfo)
       advAscribeInfo
     }).foreachRDD(rdd=>{
         rdd.foreachPartition(iter=>{
@@ -171,28 +170,38 @@ object sparkSteamReConsitution {
     )
 
 
-    // 2.付费topic
+
+
+    // 3.付费topic
     val payKafkaParams = this.getKafkaParams(prop, "pay")
     //println(payKafkaParams)
     val kafkaDStreamForPay = KafkaUtils.createDirectStream(streamingContext, LocationStrategies.PreferConsistent, Subscribe[String, String](payKafkaParams._1, payKafkaParams._2))
     kafkaDStreamForPay.map(x => {
       //println(x.value)
-      val deviceMap = getCCParams(JsonParser(x.value).convertTo[payDeviceInfo])
-      val statusInRedis = isNewDeviceInRedis(deviceMap, prop)
-      var temp: (String, String, String) = null
-      if (statusInRedis == null) {
-        //新设备
-        temp = handleNewPayConsumerRecord(deviceMap)
+      val deviceOriginMap = getCCParams(JsonParser(x.value).convertTo[payDeviceInfo])
+      var advAscribeInfo:Map[String,Any] = null
+      var infoStorage = isNewDeviceInRedis(deviceOriginMap, prop)
+      if (infoStorage == null) {
+        infoStorage =  isNewDeviceInMySQL(deviceOriginMap)
+        if(infoStorage == null){
+          //新设备
+          advAscribeInfo = handleNewPayConsumerRecord(deviceOriginMap)
+        } else {
+          //旧设备
+          val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String, String]]
+          advAscribeInfo = handleOldPayConsumerRecord(deviceOriginMap, infoStorageMap)
+        }
         //throw new Exception("pay通道比launch通道先处理")
       } else {
         //旧设备
-        temp = handleOldPayConsumerRecord(deviceMap)
+        val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String,String]]
+        advAscribeInfo = handleOldPayConsumerRecord(deviceOriginMap,infoStorageMap)
       }
-      (temp, statusInRedis)
+      advAscribeInfo
     }).foreachRDD(rdd => {
       rdd.foreachPartition(data => {
         //println("pay")
-        payData(data, prop)
+        payData(data)
       })
     })
 
@@ -385,65 +394,47 @@ object sparkSteamReConsitution {
           //println(advAscribeInfo)
           break()
         }
-
       }
     }
     //写入付费日志表
-    /*val activeSql = "INSERT INTO log_android_pay(appid, imei_md5, oaid, androidid_md5, mac_md5, ip, plan_id, channel_id, pay_time,pay_amount) VALUES(?,?,?,?,?,?,?,?,?,?)"
-    val activePrep = connection.prepareStatement(activeSql)
-    activePrep.setString(1,advAscribeInfo("appid"))
-    activePrep.setString(2,advAscribeInfo("imei"))
-    activePrep.setString(3,advAscribeInfo("oaid"))
-    activePrep.setString(4,advAscribeInfo("androidid"))
-    activePrep.setString(5,advAscribeInfo("mac"))
-    activePrep.setString(6,advAscribeInfo("ip"))
-    activePrep.setString(7,advAscribeInfo("plan_id"))
-    activePrep.setString(8,advAscribeInfo("channel_id"))
-    activePrep.setString(9,NOW)
-    activePrep.setString(10,advAscribeInfo("amount"))
-    activePrep.executeQuery*/
-
+    val payLogSql = "INSERT INTO log_android_pay(appid, imei_md5, oaid, androidid_md5, mac_md5, ip, plan_id, channel_id, pay_time,pay_amount) VALUES(?,?,?,?,?,?,?,?,?,?)"
+    JDBCutil.executeUpdate(connection, payLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW, advAscribeInfo("amount")))
     connection.close()
-    (advAscribeInfo("plan_id"),advAscribeInfo("channel_id"),advAscribeInfo("amount"))
+    Map(
+      "appid" -> advAscribeInfo("appid"),
+      "activetime" -> NOW,
+      "launchtime" -> NOW,
+      "planid" -> advAscribeInfo("plan_id"),
+      "channelid" -> advAscribeInfo("channel_id"),
+      "new" -> 1,
+      "amount"->advAscribeInfo("amount")
+    )
   }
 
   /**
    * 处理 pay 通道旧设备的逻辑
    * TODO 计划信息应该直接在Redis中读取 不再从数据库中读取
    */
-  private def handleOldPayConsumerRecord(deviceMap:Map[String,String]) = {
+  private def handleOldPayConsumerRecord(deviceMap:Map[String,String],infoStorageMap:Map[String,String]) = {
     ////////////////////旧设备
     val advAscribeInfo:mutable.Map[String,String] = mutable.Map[String,String](deviceMap.toSeq:_*)  //immutable 转 mutable
-    advAscribeInfo += ("plan_id"->"0","channel_id"->"0")
+    advAscribeInfo += ("plan_id"->infoStorageMap("planid"),"channel_id"->infoStorageMap("channelid"))
 
-    //val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
     val connection: Connection = JDBCutil.getConnection
-    val sql = "SELECT * FROM log_android_active WHERE appid=? AND imei_md5=?"
-    val prep = connection.prepareStatement(sql)
-    prep.setString(1,deviceMap("appid"))
-    prep.setString(2,deviceMap("imei"))
-    val res = prep.executeQuery
-    while (res.next()) {
-      advAscribeInfo("plan_id") = res.getString("plan_id")
-      advAscribeInfo("channel_id") = res.getString("channel_id")
-    }
-    //写入付费日志表
-    /*val launchLogSql = "INSERT INTO log_android_pay(appid, imei_md5, oaid, androidid_md5, mac_md5, ip, plan_id, channel_id, pay_time,pay_amount) VALUES(?,?,?,?,?,?,?,?,?,?)"
-    val launchLogPrep = connection.prepareStatement(launchLogSql)
-    launchLogPrep.setString(1,advAscribeInfo("appid"))
-    launchLogPrep.setString(2,advAscribeInfo("imei"))
-    launchLogPrep.setString(3,advAscribeInfo("oaid"))
-    launchLogPrep.setString(4,advAscribeInfo("androidid"))
-    launchLogPrep.setString(5,advAscribeInfo("mac"))
-    launchLogPrep.setString(6,advAscribeInfo("ip"))
-    launchLogPrep.setString(7,advAscribeInfo("plan_id"))
-    launchLogPrep.setString(8,advAscribeInfo("channel_id"))
-    launchLogPrep.setString(9,NOW)
-    launchLogPrep.setString(10,advAscribeInfo("amount"))
-    launchLogPrep.executeQuery*/
 
+    //写入付费日志表
+    val payLogSql = "INSERT INTO log_android_pay(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, plan_id, channel_id, pay_time,pay_amount) VALUES(?,?,?,?,?,?,?,?,?,?)"
+    JDBCutil.executeUpdate(connection, payLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW, advAscribeInfo("amount")))
     connection.close()
-    (advAscribeInfo("plan_id"),advAscribeInfo("channel_id"),advAscribeInfo("amount"))
+    Map(
+      "appid" -> advAscribeInfo("appid"),
+      "activetime" -> NOW,
+      "launchtime" -> NOW,
+      "planid" -> advAscribeInfo("plan_id"),
+      "channelid" -> advAscribeInfo("channel_id"),
+      "new" -> 0,
+      "amount" -> advAscribeInfo("amount")
+    )
   }
 
   /**
@@ -529,7 +520,7 @@ object sparkSteamReConsitution {
   /**
    * pay通道 付费和LTV数据的统计
    */
-  private def payData(data:Iterator[((String,String,String),String)],prop:Properties) = {
+  private def payData(data:Iterator[Map[String,Any]]) = {
 
       //val connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
       val connection: Connection = JDBCutil.getConnection
@@ -538,30 +529,30 @@ object sparkSteamReConsitution {
         val statPrep = connection.prepareStatement(planExistSql)
 
         for (row <- data) {
-          print(row._1 + "|" + row._2)
-          //付费数据更新和添加 start
-          var active_date = TODAY
-          var pay_days = 1
+          //start付费数据更新和添加
+          val active_date = TODAY
+          val pay_days = 1
+          //val active_date = new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("yyyy-MM-dd").parse(row("activetime").toString))
           //row._2 为null 说明付费早于激活计算 但判定为当天的新设备
-          if(row._2 != null){
-            val arr = row._2.split(",")
-            active_date  = arr(0)
-            pay_days = diffDays(active_date,TODAY) + 1  //跟留存的天数稍有不同 需要+1
-          }
-          statPrep.setString(1, row._1._1)
+//          if(row._2 != null){
+//            val arr = row._2.split(",")
+//            active_date  = arr(0)
+//            pay_days = diffDays(active_date,TODAY) + 1  //跟留存的天数稍有不同 需要+1
+//          }
+          statPrep.setString(1, row("planid").toString)
           statPrep.setString(2, active_date)
           statPrep.setInt(3, pay_days)
           val res = statPrep.executeQuery
           if (res.next()) {
             //更新付费统计
             val updateSql = "UPDATE statistics_pay SET pay_amount=pay_amount+?,pay_count=pay_count+1 WHERE plan_id=? AND active_date=? AND pay_days=?"
-            JDBCutil.executeUpdate(connection,updateSql,Array(row._1._3.toInt,row._1._1,active_date,pay_days))
+            JDBCutil.executeUpdate(connection,updateSql,Array(row("amount"), row("planid"), active_date, pay_days))
           } else {
             //新增付费统计
             val insertSql = "INSERT INTO statistics_pay(plan_id,channel_id,pay_amount,pay_count,pay_days,active_date,pay_date) VALUES(?,?,?,?,?,?,?)"
-            JDBCutil.executeUpdate(connection,insertSql,Array(row._1._1,row._1._2,row._1._3.toInt,1,pay_days,active_date,TODAY))
+            JDBCutil.executeUpdate(connection,insertSql,Array(row("planid"), row("channelid"), row("amount"), 1, pay_days, active_date, TODAY))
           }
-          //付费数据更新和添加 end
+          //end付费数据更新和添加
         }
         connection.close()
       } catch {
@@ -592,8 +583,13 @@ object sparkSteamReConsitution {
     mutable.Map[String,String](("hi"->"spark"))
   }
 
+  /**
+   * 提取对象obj的属性值 以map的形式返回 ???
+   * @param cc
+   * @return
+   */
   def getCCParams(cc: AnyRef) = {
-    cc.getClass.getDeclaredFields.foldLeft(Map.empty[String, String]) { (a, f) =>
+    cc.getClass.getDeclaredFields.foldLeft(Map[String, String]()) { (a, f) =>
       f.setAccessible(true)
       a + (f.getName -> f.get(cc).toString)
     }

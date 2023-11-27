@@ -36,10 +36,9 @@ object testJDBC {
 //    var map = JsonParser(sjon).convertTo[Map[String,String]]
 //    println(map)
 
-    val date = new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("yyyy-MM-dd").parse("2023-11-22 10:13:08"))
-
-
-    println(date)
+    val m = Map.empty[String, String]
+    val m1 = m + ("name"->1)
+    println(m1)
   }
 
   def fun1() = {
