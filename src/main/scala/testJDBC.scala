@@ -44,7 +44,20 @@ object testJDBC {
 //    var map = JsonParser(sjon).convertTo[Map[String,String]]
 //    println(map)
     val user = new User
-    println(this.getCCParams(user))
+    //println(this.getCCParams(user))
+    println(diffDays("2023-11-27 12:11:22","2023-11-28:02:53:23"))
+  }
+
+  private def diffDays(startDate: String, endDate: String): Int = {
+    val dft = new SimpleDateFormat("yyyy-MM-dd")
+
+    val start = dft.parse(startDate)
+    val end = dft.parse(endDate)
+    val starTime = start.getTime
+    val endTime = end.getTime
+    val num = ((endTime - starTime) / 1000).toInt //时间戳相差的毫秒数
+    //System.out.println("相差天数为：" + num / 24 / 60 / 60 / 1000) //除以一天的毫秒数
+    num / 24 / 60 / 60
 
   }
 
