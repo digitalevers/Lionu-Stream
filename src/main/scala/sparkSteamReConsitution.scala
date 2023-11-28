@@ -542,13 +542,8 @@ object sparkSteamReConsitution {
             }
           } else {
             //如果该计划没有该天的统计数据  则写入一条统计记录
-            if (row("new") == 0) {
-              throw new Exception("计划数据写入异常")
-            } else {
-              val insertSql = "INSERT INTO statistics_base(app_id,plan_id,channel_id,launch_count,active_count,stat_date) VALUES(?,?,?,?,?,?)"
-              //println(insertSql)
-              JDBCutil.executeUpdate(connection,insertSql,Array(row("appid"), row("planid"), row("channelid"), 1, 1, TODAY))
-            }
+            val insertSql = "INSERT INTO statistics_base(app_id,plan_id,channel_id,launch_count,active_count,stat_date) VALUES(?,?,?,?,?,?)"
+            JDBCutil.executeUpdate(connection,insertSql,Array(row("appid"), row("planid"), row("channelid"), 1, 1, TODAY))
           }
           //end 计划基础数据更新和添加
 
@@ -557,7 +552,7 @@ object sparkSteamReConsitution {
             val planExistSqlRet = "SELECT * FROM statistics_retention WHERE plan_id=? AND active_day=? AND retention_days=?"
             val statPrepRet = connection.prepareStatement(planExistSqlRet)
             val active_day = new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("yyyy-MM-dd").parse(row("activetime").toString))
-            //激活日期和启动日期都不是当天的才会有留存数据
+            //激活日期不是当天的才会有留存数据
             if(active_day != TODAY ){
               statPrepRet.setString(1, row("planid").toString)
               statPrepRet.setString(2, active_day)
@@ -580,7 +575,6 @@ object sparkSteamReConsitution {
             }
           }
           //end留存
-
         }
         connection.close()
       } catch {
@@ -606,6 +600,7 @@ object sparkSteamReConsitution {
 
         for (row <- data) {
           //start付费数据更新和添加
+
           val active_date = new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("yyyy-MM-dd").parse(row("activetime").toString))
           val pay_days = diffDays(active_date,TODAY) + 1  //付费天数 当天激活当天付费 pay_days 为1，第二天为2 依此类推
           statPrep.setString(1, row("planid").toString)
