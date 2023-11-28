@@ -566,8 +566,8 @@ object sparkSteamReConsitution {
                   val updateSql = "UPDATE statistics_retention SET retention_count=retention_count+? WHERE plan_id=? AND active_day=? AND retention_days=?"
                   JDBCutil.executeUpdate(connection, updateSql, Array(1, row("planid"), active_day, retention_days))
                 } else {
-                  val insertSql = "INSERT INTO statistics_retention(plan_id,channel_id,retention_count,retention_days,active_day) VALUES(?,?,?,?,?)"
-                  JDBCutil.executeUpdate(connection, insertSql, Array(row("planid"), row("channelid"), 1, retention_days, active_day))
+                  val insertSql = "INSERT INTO statistics_retention(app_id,plan_id,channel_id,retention_count,retention_days,active_day) VALUES(?,?,?,?,?)"
+                  JDBCutil.executeUpdate(connection, insertSql, Array(row("appid"),row("planid"), row("channelid"), 1, retention_days, active_day))
                 }
               } else {
                 throw new Exception("new字段为0旧设备,但retention_days等于0")
