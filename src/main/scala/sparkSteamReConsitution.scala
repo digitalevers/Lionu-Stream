@@ -98,6 +98,7 @@ object ResultJsonProtocol extends DefaultJsonProtocol {
   implicit val regDeviceInfoFormat = jsonFormat(regDeviceInfo,"androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
   implicit val payDeviceInfoFormat = jsonFormat(payDeviceInfo, "amount", "androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
 }
+
 import ResultJsonProtocol._
 
 object sparkSteamReConsitution {
@@ -179,43 +180,41 @@ object sparkSteamReConsitution {
     )
 
     // 2. 注册topic
-//    val regKafkaParams = this.getKafkaParams(prop, "reg")
-//    //println(launchKafkaParams)
-//    val kafkaDStreamForReg = KafkaUtils.createDirectStream(streamingContext, LocationStrategies.PreferConsistent, Subscribe[String, String](launchKafkaParams._1, launchKafkaParams._2))
-//    kafkaDStreamForReg.map(x => {
-//      //println(x.topic)
-//      val deviceOriginMap = getObjectProperties(JsonParser(x.value).convertTo[launchDeviceInfo])
-//      //println(deviceOriginMap)
-//      var advAscribeInfo: Map[String, Any] = null //返回的归因信息
-//      var infoStorage = isNewDeviceInRedis(deviceOriginMap, prop) //返回 Redis 中存放的json信息(激活时间，登录时间，计划id，渠道id)
-//      if (infoStorage == null) {
-//        infoStorage = isNewDeviceInMySQL(deviceOriginMap) //查找 MySQL 中返回json(激活时间，登录时间，计划id，渠道id)
-//        if (infoStorage == null) {
-//          //新设备
-//          throw new Exception("注册通道：没有找到存储的激活消息")
-//        } else {
-//          //旧设备
-//          //println(infoStorage)
-//          val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String, String]]
-//          advAscribeInfo = handleOldRegConsumerRecord(deviceOriginMap, infoStorageMap)
-//        }
-//      } else {
-//        //旧设备 传入redis的数据 写 reg 表不需要再查询
-//        //val infoObject = JsonParser(infoStorage).convertTo[redisDeviceInfo]
-//        //println(infoStorage)
-//        val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String, String]]
-//        advAscribeInfo = handleOldRegConsumerRecord(deviceOriginMap, infoStorageMap)
-//      }
-//      println("reg-"+advAscribeInfo)
-//      advAscribeInfo
-//    }).foreachRDD(rdd => {
-//        rdd.foreachPartition(iter => {
-//          launchData(iter)
-//        })
-//      }
-//    )
-
-
+    val regKafkaParams = this.getKafkaParams(prop, "reg")
+    //println(launchKafkaParams)
+    val kafkaDStreamForReg = KafkaUtils.createDirectStream(streamingContext, LocationStrategies.PreferConsistent, Subscribe[String, String](regKafkaParams._1, regKafkaParams._2))
+    kafkaDStreamForReg.map(x => {
+      //println(x.topic)
+      val deviceOriginMap = getObjectProperties(JsonParser(x.value).convertTo[launchDeviceInfo])
+      //println(deviceOriginMap)
+      var advAscribeInfo: Map[String, Any] = null //返回的归因信息
+      var infoStorage = isNewDeviceInRedis(deviceOriginMap, prop) //返回 Redis 中存放的json信息(激活时间，登录时间，计划id，渠道id)
+      if (infoStorage == null) {
+        infoStorage = isNewDeviceInMySQL(deviceOriginMap) //查找 MySQL 中返回json(激活时间，登录时间，计划id，渠道id)
+        if (infoStorage == null) {
+          //新设备
+          throw new Exception("注册通道：没有找到存储的激活消息")
+        } else {
+          //旧设备
+          //println(infoStorage)
+          val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String, String]]
+          advAscribeInfo = handleOldRegConsumerRecord(deviceOriginMap, infoStorageMap)
+        }
+      } else {
+        //旧设备 传入redis的数据 写 reg 表不需要再查询
+        //val infoObject = JsonParser(infoStorage).convertTo[redisDeviceInfo]
+        //println(infoStorage)
+        val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String, String]]
+        advAscribeInfo = handleOldRegConsumerRecord(deviceOriginMap, infoStorageMap)
+      }
+      //println("reg-"+advAscribeInfo)
+      advAscribeInfo
+    }).foreachRDD(rdd => {
+        rdd.foreachPartition(iter => {
+          regData(iter)
+        })
+      }
+    )
 
     // 3.付费topic
     val payKafkaParams = this.getKafkaParams(prop, "pay")
@@ -423,27 +422,18 @@ object sparkSteamReConsitution {
     advAscribeInfo += ("plan_id" -> infoStorageMap("planid"), "channel_id" -> infoStorageMap("channelid"))
     //val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
     val connection: Connection = JDBCutil.getConnection
-    //写入启动表 （旧设备写入）
-    val launchLogSql = "INSERT INTO log_android_reg(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
+    //写入注册设备表
+    val launchLogSql = "INSERT INTO log_android_reg(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, plan_id, channel_id, reg_time) VALUES(?,?,?,?,?,?,?,?,?)"
     JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
     connection.close()
-    //写入redis  key:appid-oaid  value:json
-    val partialDeviceInfoJson =
-      s"""{"activetime":"${infoStorageMap("activetime")}","launchtime":"${NOW}","planid":"${advAscribeInfo("plan_id")}","channelid":"${advAscribeInfo("channel_id")}"}"""
-    //println(partialDeviceInfoJson)
-    var redisRes = redisUtil.set(advAscribeInfo("appid") + '-' + deviceMap("oaid"), partialDeviceInfoJson)
-    if (redisRes == true) {
-      Map(
-        "appid" -> advAscribeInfo("appid"),
-        "activetime" -> infoStorageMap("activetime"),
-        "launchtime" -> NOW,
-        "planid" -> advAscribeInfo("plan_id"),
-        "channelid" -> advAscribeInfo("channel_id"),
-        "new" -> 0
-      )
-    } else {
-      throw new Exception("写入redis失败")
-    }
+    Map(
+      "appid" -> advAscribeInfo("appid"),
+      "activetime" -> infoStorageMap("activetime"),
+      "launchtime" -> infoStorageMap("launchtime"),
+      "planid" -> advAscribeInfo("plan_id"),
+      "channelid" -> advAscribeInfo("channel_id"),
+      "new" -> 0
+    )
   }
 
   /**
@@ -534,7 +524,7 @@ object sparkSteamReConsitution {
    */
   private def launchData(data:Iterator[Map[String,Any]]) = {
     val TODAY = this.getTODAY()
-    Try {
+    try {
       //val connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
       val connection: Connection = JDBCutil.getConnection
       try {
@@ -611,6 +601,57 @@ object sparkSteamReConsitution {
         closeMySQLConnection(connection)
       }
     }
+  }
+
+  private def regData(data: Iterator[Map[String, Any]]) = {
+    val TODAY = this.getTODAY()
+    try {
+      val connection: Connection = JDBCutil.getConnection
+      try {
+        //println(data)
+        //TODO 批量写入和更新基础统计数据
+        val planExistSql = "SELECT * FROM statistics_base WHERE app_id=? AND plan_id=? AND stat_date=?"
+        val statPrep = connection.prepareStatement(planExistSql)
+
+        for (row <- data) {
+          //start计划基础数据更新和添加
+          statPrep.setString(1, row("appid").toString)
+          statPrep.setString(2, row("planid").toString)
+          statPrep.setString(3, TODAY)
+          val res = statPrep.executeQuery
+          if (res.next()) {
+            //如果该计划已有当天的统计记录  则进行数据更新
+            var updatePrep: PreparedStatement = null
+            if (row("new") == 0) {
+              val updateSql = "UPDATE statistics_base SET reg_count=reg_count+? WHERE app_id=? AND plan_id=? AND stat_date=?"
+              JDBCutil.executeUpdate(connection, updateSql, Array(1, row("appid"), row("planid"), TODAY))
+            } else {
+              val updateSql = "UPDATE statistics_base SET launch_count=launch_count+?,active_count=active_count+? WHERE app_id=? AND plan_id=? AND stat_date=?"
+              JDBCutil.executeUpdate(connection, updateSql, Array(1, 1, row("appid"), row("planid"), TODAY))
+            }
+          } else {
+            //如果该计划没有当天的统计数据  则写入一条统计记录
+            //这里的逻辑应该是执行不到的 因为激活上报接口一定会先写入一条记录
+            if (row("new") == 0) {
+              val insertSql = "INSERT INTO statistics_base(app_id,plan_id,channel_id,reg_count,stat_date) VALUES(?,?,?,?,?)"
+              JDBCutil.executeUpdate(connection, insertSql, Array(row("appid"), row("planid"), row("channelid"), 1, TODAY))
+            } else {
+              val insertSql = "INSERT INTO statistics_base(app_id,plan_id,channel_id,launch_count,reg_count,stat_date) VALUES(?,?,?,?,?,?)"
+              JDBCutil.executeUpdate(connection, insertSql, Array(row("appid"), row("planid"), row("channelid"), 1, 1, TODAY))
+            }
+          }
+          //end 计划基础数据更新和添加
+        }
+        connection.close()
+      } catch {
+        case e: Exception => {
+          println(e.getMessage)
+        }
+      } finally {
+        closeMySQLConnection(connection)
+      }
+    }
+
   }
 
   /**
