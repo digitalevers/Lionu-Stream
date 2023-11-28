@@ -169,7 +169,7 @@ object sparkSteamReConsitution {
         val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String,String]]
         advAscribeInfo = handleOldLaunchConsumerRecord(deviceOriginMap,infoStorageMap)
       }
-      println("launch-"+advAscribeInfo)
+      //println("launch-"+advAscribeInfo)
       advAscribeInfo
     }).foreachRDD(rdd=>{
         rdd.foreachPartition(iter=>{
@@ -540,23 +540,24 @@ object sparkSteamReConsitution {
       try {
         //println(data)
         //TODO 批量写入和更新基础统计数据
-        val planExistSql = "SELECT * FROM statistics_base WHERE plan_id=? AND stat_date=?"
+        val planExistSql = "SELECT * FROM statistics_base WHERE app_id=? AND plan_id=? AND stat_date=?"
         val statPrep = connection.prepareStatement(planExistSql)
 
         for (row <- data) {
           //start计划基础数据更新和添加
-          statPrep.setString(1, row("planid").toString)
-          statPrep.setString(2, TODAY)
+          statPrep.setString(1, row("appid").toString)
+          statPrep.setString(2, row("planid").toString)
+          statPrep.setString(3, TODAY)
           val res = statPrep.executeQuery
           if (res.next()) {
             //如果该计划已有该天的统计记录  则进行数据更新
             var updatePrep: PreparedStatement = null
             if (row("new") == 0) {
-              val updateSql = "UPDATE statistics_base SET launch_count=launch_count+? WHERE plan_id=?"
-              JDBCutil.executeUpdate(connection,updateSql,Array(1, row("planid")))
+              val updateSql = "UPDATE statistics_base SET launch_count=launch_count+? WHERE app_id=? AND plan_id=? AND stat_date=?"
+              JDBCutil.executeUpdate(connection,updateSql,Array(1, row("appid"),row("planid"),TODAY))
             } else {
-              val updateSql = "UPDATE statistics_base SET launch_count=launch_count+?,active_count=active_count+? WHERE plan_id=?"
-              JDBCutil.executeUpdate(connection,updateSql,Array(1, 1, row("planid")))
+              val updateSql = "UPDATE statistics_base SET launch_count=launch_count+?,active_count=active_count+? WHERE app_id=? AND plan_id=? AND stat_date=?"
+              JDBCutil.executeUpdate(connection,updateSql,Array(1, 1, row("appid"),row("planid"),TODAY))
             }
           } else {
             //如果该计划没有该天的统计数据  则写入一条统计记录
@@ -572,23 +573,24 @@ object sparkSteamReConsitution {
 
           //start留存-旧设备才会有留存数据
           if(row("new") == 0){
-            val planExistSqlRet = "SELECT * FROM statistics_retention WHERE plan_id=? AND active_day=? AND retention_days=?"
+            val planExistSqlRet = "SELECT * FROM statistics_retention WHERE app_id=? AND plan_id=? AND active_day=? AND retention_days=?"
             val statPrepRet = connection.prepareStatement(planExistSqlRet)
             val active_day = new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("yyyy-MM-dd").parse(row("activetime").toString))
             val last_launch_day = new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("yyyy-MM-dd").parse(row("launchtime").toString))
             //激活日期 和 最近上一次启动时间都不是当天的才会有留存数据
             if(active_day != TODAY && last_launch_day != TODAY){
-              statPrepRet.setString(1, row("planid").toString)
-              statPrepRet.setString(2, active_day)
+              statPrepRet.setString(1, row("appid").toString)
+              statPrepRet.setString(2, row("planid").toString)
+              statPrepRet.setString(3, active_day)
               //计算留存天数 第二天启动则留存天数为2 第二天启动则留存天数为3 依此类推
               val retention_days = diffDays(active_day,TODAY) + 1
               if(retention_days > 1){
-                statPrepRet.setInt(3, retention_days)
+                statPrepRet.setInt(4, retention_days)
                 val retRes = statPrepRet.executeQuery
                 //查询留存记录表中是否存在记录 有记录更新 无记录写入
                 if (retRes.next()) {
-                  val updateSql = "UPDATE statistics_retention SET retention_count=retention_count+? WHERE plan_id=? AND active_day=? AND retention_days=?"
-                  JDBCutil.executeUpdate(connection, updateSql, Array(1, row("planid"), active_day, retention_days))
+                  val updateSql = "UPDATE statistics_retention SET retention_count=retention_count+? WHERE app_id=? AND plan_id=? AND active_day=? AND retention_days=?"
+                  JDBCutil.executeUpdate(connection, updateSql, Array(1, row("appid"), row("planid"), active_day, retention_days))
                 } else {
                   val insertSql = "INSERT INTO statistics_retention(app_id,plan_id,channel_id,retention_count,retention_days,active_day) VALUES(?,?,?,?,?,?)"
                   JDBCutil.executeUpdate(connection, insertSql, Array(row("appid"),row("planid"), row("channelid"), 1, retention_days, active_day))
@@ -619,21 +621,22 @@ object sparkSteamReConsitution {
       //val connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
       val connection: Connection = JDBCutil.getConnection
       try {
-        val planExistSql = "SELECT * FROM statistics_pay WHERE plan_id=? AND active_date=? AND pay_days=?"
+        val planExistSql = "SELECT * FROM statistics_pay WHERE app_id=? AND plan_id=? AND active_date=? AND pay_days=?"
         val statPrep = connection.prepareStatement(planExistSql)
 
         for (row <- data) {
           //start付费数据更新和添加
           val active_date = new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("yyyy-MM-dd").parse(row("activetime").toString))
           val pay_days = diffDays(active_date,TODAY) + 1  //付费天数 当天激活当天付费 pay_days 为1，第二天为2 依此类推
-          statPrep.setString(1, row("planid").toString)
-          statPrep.setString(2, active_date)
-          statPrep.setInt(3, pay_days)
+          statPrep.setString(1, row("appid").toString)
+          statPrep.setString(2, row("planid").toString)
+          statPrep.setString(3, active_date)
+          statPrep.setInt(4, pay_days)
           val res = statPrep.executeQuery
           if (res.next()) {
             //更新付费统计
-            val updateSql = "UPDATE statistics_pay SET pay_amount=pay_amount+?,pay_count=pay_count+1 WHERE plan_id=? AND active_date=? AND pay_days=?"
-            JDBCutil.executeUpdate(connection,updateSql,Array(row("amount"), row("planid"), active_date, pay_days))
+            val updateSql = "UPDATE statistics_pay SET pay_amount=pay_amount+?,pay_count=pay_count+1 WHERE app_id=? AND plan_id=? AND active_date=? AND pay_days=?"
+            JDBCutil.executeUpdate(connection,updateSql,Array(row("amount"), row("appid"), row("planid"), active_date, pay_days))
           } else {
             //新增付费统计
             val insertSql = "INSERT INTO statistics_pay(app_id, plan_id, channel_id, pay_amount, pay_count, pay_days, active_date, pay_date) VALUES(?,?,?,?,?,?,?,?)"
