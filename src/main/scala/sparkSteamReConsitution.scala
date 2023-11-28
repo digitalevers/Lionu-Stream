@@ -101,8 +101,16 @@ object ResultJsonProtocol extends DefaultJsonProtocol {
 import ResultJsonProtocol._
 
 object sparkSteamReConsitution {
-  private  val  NOW = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date())
-  private  val TODAY = new SimpleDateFormat("yyyy-MM-dd").format(new Date())
+  //private  val  NOW = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date())
+  //private  val TODAY = new SimpleDateFormat("yyyy-MM-dd").format(new Date())
+  private def getNOW() = {
+    new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())
+  }
+
+  private def getTODAY() = {
+    new SimpleDateFormat("yyyy-MM-dd").format(new Date())
+  }
+
 
   private def getKafkaParams(_prop:Properties,_topic:String) = {
     val _map =  Map[String, Object](
@@ -115,7 +123,6 @@ object sparkSteamReConsitution {
   }
 
   def main(args: Array[String]): Unit = {
-
     val sparkConf  = new SparkConf().setMaster("local[*]").setAppName("sparkStream")
     val streamingContext = new StreamingContext(sparkConf,Seconds(5))
     //读取配置文件
@@ -145,6 +152,7 @@ object sparkSteamReConsitution {
       var infoStorage = isNewDeviceInRedis(deviceOriginMap,prop)        //返回 Redis 中存放的json信息(激活时间，登录时间，计划id，渠道id)
       if( infoStorage == null ){
         infoStorage =  isNewDeviceInMySQL(deviceOriginMap)              //查找 MySQL 中返回json(激活时间，登录时间，计划id，渠道id)
+
         if(infoStorage == null){
           //新设备
           advAscribeInfo = handleNewLaunchConsumerRecord(deviceOriginMap)
@@ -152,7 +160,6 @@ object sparkSteamReConsitution {
           //旧设备
           //println(infoStorage)
           val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String, String]]
-
           advAscribeInfo = handleOldLaunchConsumerRecord(deviceOriginMap, infoStorageMap)
         }
       } else {
@@ -162,7 +169,7 @@ object sparkSteamReConsitution {
         val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String,String]]
         advAscribeInfo = handleOldLaunchConsumerRecord(deviceOriginMap,infoStorageMap)
       }
-      println(advAscribeInfo)
+      println("launch-"+advAscribeInfo)
       advAscribeInfo
     }).foreachRDD(rdd=>{
         rdd.foreachPartition(iter=>{
@@ -172,41 +179,41 @@ object sparkSteamReConsitution {
     )
 
     // 2. 注册topic
-    val regKafkaParams = this.getKafkaParams(prop, "reg")
-    //println(launchKafkaParams)
-    val kafkaDStreamForReg = KafkaUtils.createDirectStream(streamingContext, LocationStrategies.PreferConsistent, Subscribe[String, String](launchKafkaParams._1, launchKafkaParams._2))
-    kafkaDStreamForReg.map(x => {
-      //println(x.topic)
-      val deviceOriginMap = getObjectProperties(JsonParser(x.value).convertTo[launchDeviceInfo])
-      //println(deviceOriginMap)
-      var advAscribeInfo: Map[String, Any] = null //返回的归因信息
-      var infoStorage = isNewDeviceInRedis(deviceOriginMap, prop) //返回 Redis 中存放的json信息(激活时间，登录时间，计划id，渠道id)
-      if (infoStorage == null) {
-        infoStorage = isNewDeviceInMySQL(deviceOriginMap) //查找 MySQL 中返回json(激活时间，登录时间，计划id，渠道id)
-        if (infoStorage == null) {
-          //新设备
-          throw new Exception("注册通道：没有找到存储的激活消息")
-        } else {
-          //旧设备
-          //println(infoStorage)
-          val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String, String]]
-          advAscribeInfo = handleOldRegConsumerRecord(deviceOriginMap, infoStorageMap)
-        }
-      } else {
-        //旧设备 传入redis的数据 写 reg 表不需要再查询
-        //val infoObject = JsonParser(infoStorage).convertTo[redisDeviceInfo]
-        //println(infoStorage)
-        val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String, String]]
-        advAscribeInfo = handleOldRegConsumerRecord(deviceOriginMap, infoStorageMap)
-      }
-      println(advAscribeInfo)
-      advAscribeInfo
-    }).foreachRDD(rdd => {
-        rdd.foreachPartition(iter => {
-          launchData(iter)
-        })
-      }
-    )
+//    val regKafkaParams = this.getKafkaParams(prop, "reg")
+//    //println(launchKafkaParams)
+//    val kafkaDStreamForReg = KafkaUtils.createDirectStream(streamingContext, LocationStrategies.PreferConsistent, Subscribe[String, String](launchKafkaParams._1, launchKafkaParams._2))
+//    kafkaDStreamForReg.map(x => {
+//      //println(x.topic)
+//      val deviceOriginMap = getObjectProperties(JsonParser(x.value).convertTo[launchDeviceInfo])
+//      //println(deviceOriginMap)
+//      var advAscribeInfo: Map[String, Any] = null //返回的归因信息
+//      var infoStorage = isNewDeviceInRedis(deviceOriginMap, prop) //返回 Redis 中存放的json信息(激活时间，登录时间，计划id，渠道id)
+//      if (infoStorage == null) {
+//        infoStorage = isNewDeviceInMySQL(deviceOriginMap) //查找 MySQL 中返回json(激活时间，登录时间，计划id，渠道id)
+//        if (infoStorage == null) {
+//          //新设备
+//          throw new Exception("注册通道：没有找到存储的激活消息")
+//        } else {
+//          //旧设备
+//          //println(infoStorage)
+//          val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String, String]]
+//          advAscribeInfo = handleOldRegConsumerRecord(deviceOriginMap, infoStorageMap)
+//        }
+//      } else {
+//        //旧设备 传入redis的数据 写 reg 表不需要再查询
+//        //val infoObject = JsonParser(infoStorage).convertTo[redisDeviceInfo]
+//        //println(infoStorage)
+//        val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String, String]]
+//        advAscribeInfo = handleOldRegConsumerRecord(deviceOriginMap, infoStorageMap)
+//      }
+//      println("reg-"+advAscribeInfo)
+//      advAscribeInfo
+//    }).foreachRDD(rdd => {
+//        rdd.foreachPartition(iter => {
+//          launchData(iter)
+//        })
+//      }
+//    )
 
 
 
@@ -219,6 +226,7 @@ object sparkSteamReConsitution {
       val deviceOriginMap = getObjectProperties(JsonParser(x.value).convertTo[payDeviceInfo])
       var advAscribeInfo:Map[String,Any] = null
       var infoStorage = isNewDeviceInRedis(deviceOriginMap, prop)
+
       if (infoStorage == null) {
         infoStorage =  isNewDeviceInMySQL(deviceOriginMap)
         if(infoStorage == null){
@@ -235,6 +243,7 @@ object sparkSteamReConsitution {
         val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String,String]]
         advAscribeInfo = handleOldPayConsumerRecord(deviceOriginMap,infoStorageMap)
       }
+      println("pay-"+advAscribeInfo)
       advAscribeInfo
     }).foreachRDD(rdd => {
       rdd.foreachPartition(data => {
@@ -294,9 +303,13 @@ object sparkSteamReConsitution {
     } else {
       val launchExistSql = "SELECT launch_time FROM log_android_launch WHERE oaid_md5=? ORDER BY launch_time DESC LIMIT 0,1"
       val launchRes = JDBCutil.executeQuery(connection, launchExistSql, Array(deviceMap("oaid")))
-      //旧设备
-      //redisDeviceInfo(activeRes(0)(0),launchRes(0)(0),activeRes(0)(1),activeRes(0)(2)).toJson.compactPrint
-      s"""{"activetime":"${activeRes(0)(0)}","launchtime":"${launchRes(0)(0)}","planid":"${activeRes(0)(1)}","channelid":"${activeRes(0)(2)}"}"""
+      if(launchRes.length == 0){
+        throw new Exception("有激活信息但是未查到启动信息")
+      } else {
+        //redisDeviceInfo(activeRes(0)(0),launchRes(0)(0),activeRes(0)(1),activeRes(0)(2)).toJson.compactPrint
+        s"""{"activetime":"${activeRes(0)(0)}","launchtime":"${launchRes(0)(0)}","planid":"${activeRes(0)(1)}","channelid":"${activeRes(0)(2)}"}"""
+      }
+
     }
   }
 
@@ -304,6 +317,7 @@ object sparkSteamReConsitution {
    * 处理launch通道 新设备的逻辑
    */
   private def handleNewLaunchConsumerRecord(deviceMap:Map[String,String]) = {
+    val NOW = this.getNOW()
     //查找条件优先级 imei->oaid->android_id->mac->ip
     val sqls = mutable.LinkedHashMap[String,String](
       "imei"      ->"SELECT  * FROM log_android_click_data WHERE imei_md5=?",
@@ -369,12 +383,13 @@ object sparkSteamReConsitution {
    * 处理 launch 通道旧设备的逻辑
    */
   private def handleOldLaunchConsumerRecord(deviceMap:Map[String,String],infoStorageMap:Map[String,String]) = {
+    val NOW = this.getNOW()
     ////////////////////旧设备
     val advAscribeInfo:mutable.Map[String,String] = mutable.Map[String,String](deviceMap.toSeq:_*)
     advAscribeInfo += ("plan_id"->infoStorageMap("planid"),"channel_id"->infoStorageMap("channelid"))
     //val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
     val connection: Connection = JDBCutil.getConnection
-    //写入启动表 （旧设备写入）
+    //写入启动表
     val launchLogSql = "INSERT INTO log_android_launch(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
     JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
     connection.close()
@@ -387,7 +402,7 @@ object sparkSteamReConsitution {
       Map(
         "appid" -> advAscribeInfo("appid"),
         "activetime" -> infoStorageMap("activetime"),
-        "launchtime" -> NOW,
+        "launchtime" -> infoStorageMap("launchtime"), //最近上一次的设备启动时间
         "planid" -> advAscribeInfo("plan_id"),
         "channelid" -> advAscribeInfo("channel_id"),
         "new" -> 0
@@ -402,6 +417,7 @@ object sparkSteamReConsitution {
    * 处理 launch 通道旧设备的逻辑
    */
   private def handleOldRegConsumerRecord(deviceMap: Map[String, String], infoStorageMap: Map[String, String]) = {
+    val NOW = this.getNOW()
     ////////////////////旧设备
     val advAscribeInfo: mutable.Map[String, String] = mutable.Map[String, String](deviceMap.toSeq: _*)
     advAscribeInfo += ("plan_id" -> infoStorageMap("planid"), "channel_id" -> infoStorageMap("channelid"))
@@ -436,6 +452,7 @@ object sparkSteamReConsitution {
    * 因为正常来说 launch 通道的数据肯定会较 pay 通道的数据先得到处理
    */
   private def handleNewPayConsumerRecord(deviceMap:Map[String,String]) = {
+    val NOW = this.getNOW()
     //查找条件优先级 imei->oaid->android_id->mac->ip
     val sqls = mutable.LinkedHashMap[String,String](
       "imei"     ->"SELECT  * FROM log_android_click_data WHERE imei_md5=?",
@@ -491,10 +508,10 @@ object sparkSteamReConsitution {
    * TODO 计划信息应该直接在Redis中读取 不再从数据库中读取
    */
   private def handleOldPayConsumerRecord(deviceMap:Map[String,String],infoStorageMap:Map[String,String]) = {
+    val NOW = this.getNOW()
     ////////////////////旧设备
     val advAscribeInfo:mutable.Map[String,String] = mutable.Map[String,String](deviceMap.toSeq:_*)  //immutable 转 mutable
     advAscribeInfo += ("plan_id"->infoStorageMap("planid"),"channel_id"->infoStorageMap("channelid"))
-
     val connection: Connection = JDBCutil.getConnection
 
     //写入付费日志表
@@ -503,8 +520,8 @@ object sparkSteamReConsitution {
     connection.close()
     Map(
       "appid" -> advAscribeInfo("appid"),
-      "activetime" -> NOW,
-      "launchtime" -> NOW,
+      "activetime" -> infoStorageMap("activetime"),
+      "launchtime" -> infoStorageMap("launchtime"),
       "planid" -> advAscribeInfo("plan_id"),
       "channelid" -> advAscribeInfo("channel_id"),
       "new" -> 0,
@@ -516,6 +533,7 @@ object sparkSteamReConsitution {
    * launch通道 基础和留存数据的统计
    */
   private def launchData(data:Iterator[Map[String,Any]]) = {
+    val TODAY = this.getTODAY()
     Try {
       //val connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
       val connection: Connection = JDBCutil.getConnection
@@ -542,8 +560,13 @@ object sparkSteamReConsitution {
             }
           } else {
             //如果该计划没有该天的统计数据  则写入一条统计记录
-            val insertSql = "INSERT INTO statistics_base(app_id,plan_id,channel_id,launch_count,active_count,stat_date) VALUES(?,?,?,?,?,?)"
-            JDBCutil.executeUpdate(connection,insertSql,Array(row("appid"), row("planid"), row("channelid"), 1, 1, TODAY))
+            if(row("new") == 0){
+              val insertSql = "INSERT INTO statistics_base(app_id,plan_id,channel_id,launch_count,stat_date) VALUES(?,?,?,?,?)"
+              JDBCutil.executeUpdate(connection, insertSql, Array(row("appid"), row("planid"), row("channelid"), 1, TODAY))
+            } else {
+              val insertSql = "INSERT INTO statistics_base(app_id,plan_id,channel_id,launch_count,active_count,stat_date) VALUES(?,?,?,?,?,?)"
+              JDBCutil.executeUpdate(connection, insertSql, Array(row("appid"), row("planid"), row("channelid"), 1, 1, TODAY))
+            }
           }
           //end 计划基础数据更新和添加
 
@@ -552,13 +575,14 @@ object sparkSteamReConsitution {
             val planExistSqlRet = "SELECT * FROM statistics_retention WHERE plan_id=? AND active_day=? AND retention_days=?"
             val statPrepRet = connection.prepareStatement(planExistSqlRet)
             val active_day = new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("yyyy-MM-dd").parse(row("activetime").toString))
-            //激活日期不是当天的才会有留存数据
-            if(active_day != TODAY ){
+            val last_launch_day = new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("yyyy-MM-dd").parse(row("launchtime").toString))
+            //激活日期 和 最近上一次启动时间都不是当天的才会有留存数据
+            if(active_day != TODAY && last_launch_day != TODAY){
               statPrepRet.setString(1, row("planid").toString)
               statPrepRet.setString(2, active_day)
-              //计算留存天数 当天为0 第二天启动则留存天数为1 依此类推
-              val retention_days = diffDays(active_day,TODAY)
-              if(retention_days > 0){
+              //计算留存天数 第二天启动则留存天数为2 第二天启动则留存天数为3 依此类推
+              val retention_days = diffDays(active_day,TODAY) + 1
+              if(retention_days > 1){
                 statPrepRet.setInt(3, retention_days)
                 val retRes = statPrepRet.executeQuery
                 //查询留存记录表中是否存在记录 有记录更新 无记录写入
@@ -566,11 +590,11 @@ object sparkSteamReConsitution {
                   val updateSql = "UPDATE statistics_retention SET retention_count=retention_count+? WHERE plan_id=? AND active_day=? AND retention_days=?"
                   JDBCutil.executeUpdate(connection, updateSql, Array(1, row("planid"), active_day, retention_days))
                 } else {
-                  val insertSql = "INSERT INTO statistics_retention(app_id,plan_id,channel_id,retention_count,retention_days,active_day) VALUES(?,?,?,?,?)"
+                  val insertSql = "INSERT INTO statistics_retention(app_id,plan_id,channel_id,retention_count,retention_days,active_day) VALUES(?,?,?,?,?,?)"
                   JDBCutil.executeUpdate(connection, insertSql, Array(row("appid"),row("planid"), row("channelid"), 1, retention_days, active_day))
                 }
               } else {
-                throw new Exception("new字段为0旧设备,但retention_days等于0")
+                throw new Exception("new字段为0旧设备,但retention_days 小于等于1")
               }
             }
           }
@@ -591,7 +615,7 @@ object sparkSteamReConsitution {
    * pay通道 付费和LTV数据的统计
    */
   private def payData(data:Iterator[Map[String,Any]]) = {
-
+      val TODAY = this.getTODAY()
       //val connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
       val connection: Connection = JDBCutil.getConnection
       try {
@@ -600,7 +624,6 @@ object sparkSteamReConsitution {
 
         for (row <- data) {
           //start付费数据更新和添加
-
           val active_date = new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("yyyy-MM-dd").parse(row("activetime").toString))
           val pay_days = diffDays(active_date,TODAY) + 1  //付费天数 当天激活当天付费 pay_days 为1，第二天为2 依此类推
           statPrep.setString(1, row("planid").toString)
@@ -613,8 +636,8 @@ object sparkSteamReConsitution {
             JDBCutil.executeUpdate(connection,updateSql,Array(row("amount"), row("planid"), active_date, pay_days))
           } else {
             //新增付费统计
-            val insertSql = "INSERT INTO statistics_pay(plan_id,channel_id,pay_amount,pay_count,pay_days,active_date,pay_date) VALUES(?,?,?,?,?,?,?)"
-            JDBCutil.executeUpdate(connection,insertSql,Array(row("planid"), row("channelid"), row("amount"), 1, pay_days, active_date, TODAY))
+            val insertSql = "INSERT INTO statistics_pay(app_id, plan_id, channel_id, pay_amount, pay_count, pay_days, active_date, pay_date) VALUES(?,?,?,?,?,?,?,?)"
+            JDBCutil.executeUpdate(connection,insertSql,Array(row("appid"), row("planid"), row("channelid"), row("amount"), 1, pay_days, active_date, TODAY))
           }
           //end付费数据更新和添加
         }
