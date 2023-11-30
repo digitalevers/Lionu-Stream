@@ -112,6 +112,20 @@ object sparkSteamReConsitution {
     new SimpleDateFormat("yyyy-MM-dd").format(new Date())
   }
 
+  /**
+   * 根据 os 的值获取不同的终端类型在 Redis 中的特征key
+   * 即标识设备是否已存入 Redis 的属性值
+   * @param os
+   */
+  private def getRedisMetric(os:String) = {
+    os match {
+      case "1"=>"oaid"
+      case "2"=>"uuid"
+      case _=>"default"
+    }
+  }
+
+
 
   private def getKafkaParams(_prop:Properties,_topic:String) = {
     val _map =  Map[String, Object](
@@ -277,7 +291,8 @@ object sparkSteamReConsitution {
         println(ex.getMessage)
       }
     }
-    val deviceExistInRedis = redisUtil.get(deviceMap("appid") + "-" + deviceMap("oaid")).getOrElse(null)
+    val metric = this.getRedisMetric(deviceMap("os").toString)
+    val deviceExistInRedis = redisUtil.get(deviceMap("appid") + "-" + deviceMap(metric)).getOrElse(null)
     deviceExistInRedis
   }
 
@@ -293,6 +308,13 @@ object sparkSteamReConsitution {
    *         TODO 根据设备类型是Android还是iOS查找对应的数据库表
    */
   private def isNewDeviceInMySQL(deviceMap: Map[String, Any]): String = {
+    deviceMap("os").toString match {
+      case "1"=>this.isNewAndroidDeviceInMySQL(deviceMap)
+      case "2"=>this.isNewiOSDeviceInMySQL(deviceMap)
+    }
+  }
+
+  private def isNewAndroidDeviceInMySQL(deviceMap: Map[String, Any]): String = {
     val connection: Connection = JDBCutil.getConnection
     val activeExistSql = "SELECT active_time,plan_id,channel_id FROM log_android_active WHERE oaid_md5=? ORDER BY active_time LIMIT 0,1"
     val activeRes = JDBCutil.executeQuery(connection, activeExistSql, Array(deviceMap("oaid")))
@@ -302,15 +324,41 @@ object sparkSteamReConsitution {
     } else {
       val launchExistSql = "SELECT launch_time FROM log_android_launch WHERE oaid_md5=? ORDER BY launch_time DESC LIMIT 0,1"
       val launchRes = JDBCutil.executeQuery(connection, launchExistSql, Array(deviceMap("oaid")))
-      if(launchRes.length == 0){
+      if (launchRes.length == 0) {
         throw new Exception("有激活信息但是未查到启动信息")
       } else {
         //redisDeviceInfo(activeRes(0)(0),launchRes(0)(0),activeRes(0)(1),activeRes(0)(2)).toJson.compactPrint
         s"""{"activetime":"${activeRes(0)(0)}","launchtime":"${launchRes(0)(0)}","planid":"${activeRes(0)(1)}","channelid":"${activeRes(0)(2)}"}"""
       }
-
     }
   }
+
+  /**
+   * ["uuid"],["idfa"!=00000000-0000-0000-0000-000000000000],["internal ip","deviceModel","outernal ip"]
+   *
+   * @param deviceMap
+   */
+  private def isNewiOSDeviceInMySQL(deviceMap: Map[String, Any]): String = {
+    val connection: Connection = JDBCutil.getConnection
+    val metric = this.getRedisMetric(deviceMap("os").toString)
+    val activeExistSql = "SELECT active_time,plan_id,channel_id FROM log_ios_active WHERE uuid=? ORDER BY active_time LIMIT 0,1"
+    val activeRes = JDBCutil.executeQuery(connection, activeExistSql, Array(deviceMap(metric)))
+    if (activeRes.length == 0) {
+      //新设备
+      null
+    } else {
+      val launchExistSql = "SELECT launch_time FROM log_ios_launch WHERE uuid=? ORDER BY launch_time DESC LIMIT 0,1"
+      val launchRes = JDBCutil.executeQuery(connection, launchExistSql, Array(deviceMap(metric)))
+      if (launchRes.length == 0) {
+        throw new Exception("有激活信息但是未查到启动信息")
+      } else {
+        //redisDeviceInfo(activeRes(0)(0),launchRes(0)(0),activeRes(0)(1),activeRes(0)(2)).toJson.compactPrint
+        s"""{"activetime":"${activeRes(0)(0)}","launchtime":"${launchRes(0)(0)}","planid":"${activeRes(0)(1)}","channelid":"${activeRes(0)(2)}"}"""
+      }
+    }
+  }
+
+
 
   /**
    * 处理launch通道 新设备的逻辑
