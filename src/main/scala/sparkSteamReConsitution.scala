@@ -117,14 +117,24 @@ object sparkSteamReConsitution {
    * 即标识设备是否已存入 Redis 的属性值
    * @param os
    */
-  private def getRedisMetric(os:String) = {
-    os match {
-      case "1"=>"oaid"
-      case "2"=>"uuid"
-      case _=>"default"
-    }
-  }
+//  private def getRedisMetric(os:String) = {
+//    os match {
+//      case "1"=>"oaid"
+//      case "2"=>"uuid"
+//      case _=>"default"
+//    }
+//  }
 
+  /**
+   * 根据 os 的值获取不同的终端类型在 Redis 中的特征key
+   * 即标识设备是否已存入 Redis 的属性值
+   *
+   * @param os
+   */
+  private val getRedisMetric = Map(
+    "1"->"oaid",
+    "2"->"uuid"
+  )
 
 
   private def getKafkaParams(_prop:Properties,_topic:String) = {
@@ -163,14 +173,14 @@ object sparkSteamReConsitution {
       val deviceOriginMap  = getObjectProperties(JsonParser(x.value).convertTo[launchDeviceInfo])
       //println(deviceOriginMap)
 
-      var advAscribeInfo:Map[String,Any] = null                                //返回的归因信息
+      var advAscribeInfo:Map[String,Any] = null                         //返回的归因信息
       var infoStorage = isNewDeviceInRedis(deviceOriginMap,prop)        //返回 Redis 中存放的json信息(激活时间，登录时间，计划id，渠道id)
       if( infoStorage == null ){
         infoStorage =  isNewDeviceInMySQL(deviceOriginMap)              //查找 MySQL 中返回json(激活时间，登录时间，计划id，渠道id)
 
         if(infoStorage == null){
           //新设备
-          advAscribeInfo = handleNewLaunchConsumerRecord(deviceOriginMap)
+          advAscribeInfo = handleNewLaunch(deviceOriginMap)
         } else {
           //旧设备
           //println(infoStorage)
@@ -311,19 +321,21 @@ object sparkSteamReConsitution {
     deviceMap("os").toString match {
       case "1"=>this.isNewAndroidDeviceInMySQL(deviceMap)
       case "2"=>this.isNewiOSDeviceInMySQL(deviceMap)
+      case _=>throw new Exception("platform error")
     }
   }
 
   private def isNewAndroidDeviceInMySQL(deviceMap: Map[String, Any]): String = {
+    val metric = getRedisMetric(deviceMap("os").toString)
     val connection: Connection = JDBCutil.getConnection
     val activeExistSql = "SELECT active_time,plan_id,channel_id FROM log_android_active WHERE oaid_md5=? ORDER BY active_time LIMIT 0,1"
-    val activeRes = JDBCutil.executeQuery(connection, activeExistSql, Array(deviceMap("oaid")))
+    val activeRes = JDBCutil.executeQuery(connection, activeExistSql, Array(deviceMap(metric)))
     if (activeRes.length == 0) {
       //新设备
       null
     } else {
       val launchExistSql = "SELECT launch_time FROM log_android_launch WHERE oaid_md5=? ORDER BY launch_time DESC LIMIT 0,1"
-      val launchRes = JDBCutil.executeQuery(connection, launchExistSql, Array(deviceMap("oaid")))
+      val launchRes = JDBCutil.executeQuery(connection, launchExistSql, Array(deviceMap(metric)))
       if (launchRes.length == 0) {
         throw new Exception("有激活信息但是未查到启动信息")
       } else {
@@ -339,8 +351,9 @@ object sparkSteamReConsitution {
    * @param deviceMap
    */
   private def isNewiOSDeviceInMySQL(deviceMap: Map[String, Any]): String = {
+    val metric = getRedisMetric(deviceMap("os").toString)
     val connection: Connection = JDBCutil.getConnection
-    val metric = this.getRedisMetric(deviceMap("os").toString)
+
     val activeExistSql = "SELECT active_time,plan_id,channel_id FROM log_ios_active WHERE uuid=? ORDER BY active_time LIMIT 0,1"
     val activeRes = JDBCutil.executeQuery(connection, activeExistSql, Array(deviceMap(metric)))
     if (activeRes.length == 0) {
@@ -363,19 +376,30 @@ object sparkSteamReConsitution {
   /**
    * 处理launch通道 新设备的逻辑
    */
-  private def handleNewLaunchConsumerRecord(deviceMap:Map[String,String]) = {
+  private def handleNewLaunch(deviceMap:Map[String,String]) = {
+    deviceMap("os").toInt match {
+      case 1 => this.newAndroidLaunch(deviceMap)
+      case 2 => this.newiOSLaunch(deviceMap)
+    }
+  }
+
+
+  /**
+   * 处理新的Android设备激活
+   */
+  private def newAndroidLaunch(deviceMap:Map[String,String]) = {
     val NOW = this.getNOW()
     //查找条件优先级 imei->oaid->android_id->mac->ip
-    val sqls = mutable.LinkedHashMap[String,String](
-      "imei"      ->"SELECT  * FROM log_android_click_data WHERE imei_md5=?",
-              "oaid"      ->"SELECT  * FROM log_android_click_data WHERE oaid=?",
-              "androidid" ->"SELECT  * FROM log_android_click_data WHERE androidid_md5=?",
-              "mac"       ->"SELECT  * FROM log_android_click_data WHERE mac_md5=?",
-              "ip"        ->"SELECT  * FROM log_android_click_data WHERE ip=?"
+    val sqls = mutable.LinkedHashMap[String, String](
+      "imei" -> "SELECT  * FROM log_android_click_data WHERE imei_md5=?",
+      "oaid" -> "SELECT  * FROM log_android_click_data WHERE oaid=?",
+      "androidid" -> "SELECT  * FROM log_android_click_data WHERE androidid_md5=?",
+      "mac" -> "SELECT  * FROM log_android_click_data WHERE mac_md5=?",
+      "ip" -> "SELECT  * FROM log_android_click_data WHERE ip=?"
     )
     ////////////////新设备
-    val advAscribeInfo:mutable.Map[String,String] = mutable.Map[String,String](deviceMap.toSeq:_*)    //immutable.map 转 mutable.map
-    advAscribeInfo += ("plan_id"->"0","channel_id"->"0")
+    val advAscribeInfo: mutable.Map[String, String] = mutable.Map[String, String](deviceMap.toSeq: _*) //immutable.map 转 mutable.map
+    advAscribeInfo += ("plan_id" -> "0", "channel_id" -> "0")
 
     //val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
     val connection: Connection = JDBCutil.getConnection
@@ -384,11 +408,11 @@ object sparkSteamReConsitution {
       for ((k, sql) <- sqls) {
         val prep = connection.prepareStatement(sql)
         k match {
-          case "imei"     =>prep.setString(1, deviceMap("imei"))
-          case "oaid"     =>prep.setString(1, deviceMap("oaid"))
-          case "androidid"=>prep.setString(1, deviceMap("androidid"))
-          case "mac"      =>prep.setString(1, deviceMap("mac"))
-          case "ip"       =>prep.setString(1, deviceMap("ip"))
+          case "imei" => prep.setString(1, deviceMap("imei"))
+          case "oaid" => prep.setString(1, deviceMap("oaid"))
+          case "androidid" => prep.setString(1, deviceMap("androidid"))
+          case "mac" => prep.setString(1, deviceMap("mac"))
+          case "ip" => prep.setString(1, deviceMap("ip"))
         }
         val res = prep.executeQuery
         //广告归因信息
@@ -406,7 +430,7 @@ object sparkSteamReConsitution {
 
     //写入启动表
     val launchLogSql = "INSERT INTO log_android_launch(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
-    JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"),advAscribeInfo("imei"),advAscribeInfo("oaid"),advAscribeInfo("androidid"),advAscribeInfo("mac"),advAscribeInfo("ip"),advAscribeInfo("plan_id"),advAscribeInfo("channel_id"),NOW))
+    JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
     connection.close()
 
     //写入Redis  key:appid-oaid  value:部分设备信息的json字符串
@@ -417,14 +441,80 @@ object sparkSteamReConsitution {
 
     redisUtil.set(advAscribeInfo("appid") + '-' + deviceMap("oaid"), partialDeviceInfoJson)
     Map(
-      "appid"->advAscribeInfo("appid"),
-      "activetime"->NOW,
-      "launchtime"->NOW,
-      "planid"->advAscribeInfo("plan_id"),
-      "channelid"->advAscribeInfo("channel_id"),
-      "new"->1
+      "appid" -> advAscribeInfo("appid"),
+      "activetime" -> NOW,
+      "launchtime" -> NOW,
+      "planid" -> advAscribeInfo("plan_id"),
+      "channelid" -> advAscribeInfo("channel_id"),
+      "new" -> 1
     )
   }
+
+  /**
+   * 处理新的iOS设备激活
+   * @param deviceMap
+   */
+  private def newiOSLaunch(deviceMap:Map[String,String]) = {
+    println(deviceMap)
+    val NOW = this.getNOW()
+    //查找条件优先级 ip->idfa->caid1->caid2
+    val sqls = Map(
+      "ip" -> "SELECT  * FROM log_ios_click_data WHERE external_ip=?",
+      "oaid" -> "SELECT  * FROM log_android_click_data WHERE oaid=?"
+    )
+    ////////////////新设备
+    val advAscribeInfo: mutable.Map[String, String] = mutable.Map[String, String](deviceMap.toSeq: _*) //immutable.map 转 mutable.map
+    advAscribeInfo += ("plan_id" -> "0", "channel_id" -> "0")
+
+    //val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
+    val connection: Connection = JDBCutil.getConnection
+    //查找7天内的 mysql 数据进行归因
+    breakable {
+      for ((k, sql) <- sqls) {
+        val prep = connection.prepareStatement(sql)
+        k match {
+          case "imei" => prep.setString(1, deviceMap("imei"))
+          case "oaid" => prep.setString(1, deviceMap("oaid"))
+          case "androidid" => prep.setString(1, deviceMap("androidid"))
+          case "mac" => prep.setString(1, deviceMap("mac"))
+          case "ip" => prep.setString(1, deviceMap("ip"))
+        }
+        val res = prep.executeQuery
+        //广告归因信息
+        while (res.next()) {
+          advAscribeInfo("plan_id") = res.getString("plan_id")
+          advAscribeInfo("channel_id") = res.getString("channel_id")
+          //println(advAscribeInfo)
+          break()
+        }
+      }
+    }
+    //写入激活表
+    val insertActiveSql = "INSERT INTO log_android_active(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, plan_id, channel_id, active_time) VALUES(?,?,?,?,?,?,?,?,?)"
+    JDBCutil.executeUpdate(connection, insertActiveSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
+
+    //写入启动表
+    val launchLogSql = "INSERT INTO log_android_launch(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
+    JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
+    connection.close()
+
+    //写入Redis  key:appid-oaid  value:部分设备信息的json字符串
+    //val redisInfo = redisDeviceInfo(NOW,NOW,advAscribeInfo("plan_id"),advAscribeInfo("channel_id"))
+    //val partialDeviceInfoJson = redisInfo.toJson.compactPrint
+    val partialDeviceInfoJson =
+    s"""{"activetime":"${NOW}","launchtime":"${NOW}","planid":"${advAscribeInfo("plan_id")}","channelid":"${advAscribeInfo("channel_id")}"}"""
+
+    redisUtil.set(advAscribeInfo("appid") + '-' + deviceMap("oaid"), partialDeviceInfoJson)
+    Map(
+      "appid" -> advAscribeInfo("appid"),
+      "activetime" -> NOW,
+      "launchtime" -> NOW,
+      "planid" -> advAscribeInfo("plan_id"),
+      "channelid" -> advAscribeInfo("channel_id"),
+      "new" -> 1
+    )
+  }
+
 
   /**
    * 处理 launch 通道旧设备的逻辑
@@ -826,5 +916,3 @@ object sparkSteamReConsitution {
     }
   }
 }
-
-
