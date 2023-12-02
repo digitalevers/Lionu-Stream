@@ -33,25 +33,46 @@ import spray.json.{DefaultJsonProtocol, JsValue, JsonParser}
 //)
 
 case class launchDeviceInfo(
-                             androidid:String,
-                             appName:String,
-                             appid:String,
-                             applicationId:String,
-                             channel:String,
-                             imei:String,
-                             ip:String,
-                             mac:String,
-                             model:String,
-                             oaid:String,
-                             os:Int,
-                             planid:String,
-                             sys:Int,
-                             time:String,
-                             ua:String,
-                             versionCode:Int,
-                             versionName:String)
-
+                           action:String,
+                           androidid:String,
+                           appName:String,
+                           appid:String,
+                           applicationId:String,
+                           channel:String,
+                           imei:String,
+                           ip:String,
+                           mac:String,
+                           model:String,
+                           oaid:String,
+                           os:Int,
+                           planid:String,
+                           sys:Int,
+                           time:String,
+                           ua:String,
+                           versionCode:Int,
+                           versionName:String)
 case class regDeviceInfo(
+                          action:String,
+                          androidid:String,
+                          appName:String,
+                          appid:String,
+                          applicationId:String,
+                          channel:String,
+                          imei:String,
+                          ip:String,
+                          mac:String,
+                          model:String,
+                          oaid:String,
+                          os:Int,
+                          planid:String,
+                          sys:Int,
+                          time:String,
+                          ua:String,
+                          versionCode:Int,
+                          versionName:String)
+case class payDeviceInfo(
+                          action:String,
+                          amount:String,
                           androidid:String,
                           appName:String,
                           appid:String,
@@ -70,33 +91,13 @@ case class regDeviceInfo(
                           versionCode:Int,
                           versionName:String)
 
-case class payDeviceInfo(
-                      amount:String,
-                      androidid:String,
-                      appName:String,
-                      appid:String,
-                      applicationId:String,
-                      channel:String,
-                      imei:String,
-                      ip:String,
-                      mac:String,
-                      model:String,
-                      oaid:String,
-                      os:Int,
-                      planid:String,
-                      sys:Int,
-                      time:String,
-                      ua:String,
-                      versionCode:Int,
-                      versionName:String)
-
 
 //定义解析协议
 object ResultJsonProtocol extends DefaultJsonProtocol {
   //implicit val redisDeviceInfoFormat = jsonFormat(redisDeviceInfo,"activetime","launchtime","planid","channedid")
-  implicit val launchDeviceInfoFormat = jsonFormat(launchDeviceInfo,"androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
-  implicit val regDeviceInfoFormat = jsonFormat(regDeviceInfo,"androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
-  implicit val payDeviceInfoFormat = jsonFormat(payDeviceInfo, "amount", "androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
+  implicit val launchDeviceInfoFormat = jsonFormat(launchDeviceInfo,"action","androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
+  implicit val regDeviceInfoFormat = jsonFormat(regDeviceInfo,"action","androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
+  implicit val payDeviceInfoFormat = jsonFormat(payDeviceInfo,"action", "amount", "androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
 }
 
 import ResultJsonProtocol._
@@ -149,7 +150,7 @@ object sparkSteamReConsitution {
 
   def main(args: Array[String]): Unit = {
     val sparkConf  = new SparkConf().setMaster("local[*]").setAppName("sparkStream")
-    val streamingContext = new StreamingContext(sparkConf,Seconds(5))
+    val streamingContext = new StreamingContext(sparkConf,Seconds(15))
     //读取配置文件
     val prop = new Properties();
     // 使用ClassLoader加载properties配置文件生成对应的输入流
@@ -169,9 +170,9 @@ object sparkSteamReConsitution {
     //println(launchKafkaParams)
     val kafkaDStreamForLaunch = KafkaUtils.createDirectStream(streamingContext,LocationStrategies.PreferConsistent,Subscribe[String,String](launchKafkaParams._1, launchKafkaParams._2))
     kafkaDStreamForLaunch.map(x=>{
-      //println(x.topic)
+      //println(x.value)
       val deviceOriginMap  = getObjectProperties(JsonParser(x.value).convertTo[launchDeviceInfo])
-      //println(deviceOriginMap)
+      println(deviceOriginMap)
 
       var advAscribeInfo:Map[String,Any] = null                         //返回的归因信息
       var infoStorage = isNewDeviceInRedis(deviceOriginMap,prop)        //返回 Redis 中存放的json信息(激活时间，登录时间，计划id，渠道id)
@@ -203,6 +204,7 @@ object sparkSteamReConsitution {
       }
     )
 
+
     // 2. 注册topic
     val regKafkaParams = this.getKafkaParams(prop, "reg")
     //println(launchKafkaParams)
@@ -210,7 +212,7 @@ object sparkSteamReConsitution {
     kafkaDStreamForReg.map(x => {
       //println(x.topic)
       val deviceOriginMap = getObjectProperties(JsonParser(x.value).convertTo[launchDeviceInfo])
-      //println(deviceOriginMap)
+      println(deviceOriginMap)
       var advAscribeInfo: Map[String, Any] = null //返回的归因信息
       var infoStorage = isNewDeviceInRedis(deviceOriginMap, prop) //返回 Redis 中存放的json信息(激活时间，登录时间，计划id，渠道id)
       if (infoStorage == null) {
@@ -222,14 +224,14 @@ object sparkSteamReConsitution {
           //旧设备
           //println(infoStorage)
           val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String, String]]
-          advAscribeInfo = handleOldRegConsumerRecord(deviceOriginMap, infoStorageMap)
+          advAscribeInfo = handleOldReg(deviceOriginMap, infoStorageMap)
         }
       } else {
         //旧设备 传入redis的数据 写 reg 表不需要再查询
         //val infoObject = JsonParser(infoStorage).convertTo[redisDeviceInfo]
         //println(infoStorage)
         val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String, String]]
-        advAscribeInfo = handleOldRegConsumerRecord(deviceOriginMap, infoStorageMap)
+        advAscribeInfo = handleOldReg(deviceOriginMap, infoStorageMap)
       }
       //println("reg-"+advAscribeInfo)
       advAscribeInfo
@@ -239,6 +241,7 @@ object sparkSteamReConsitution {
         })
       }
     )
+
 
     // 3.付费topic
     val payKafkaParams = this.getKafkaParams(prop, "pay")
@@ -259,15 +262,15 @@ object sparkSteamReConsitution {
         } else {
           //旧设备
           val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String, String]]
-          advAscribeInfo = handleOldPayConsumerRecord(deviceOriginMap, infoStorageMap)
+          advAscribeInfo = handleOldPay(deviceOriginMap, infoStorageMap)
         }
         //throw new Exception("pay通道比launch通道先处理")
       } else {
         //旧设备
         val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String,String]]
-        advAscribeInfo = handleOldPayConsumerRecord(deviceOriginMap,infoStorageMap)
+        advAscribeInfo = handleOldPay(deviceOriginMap,infoStorageMap)
       }
-      println("pay-"+advAscribeInfo)
+      //println("pay-"+advAscribeInfo)
       advAscribeInfo
     }).foreachRDD(rdd => {
       rdd.foreachPartition(data => {
@@ -455,12 +458,13 @@ object sparkSteamReConsitution {
    * @param deviceMap
    */
   private def handleNewLaunchiOS(deviceMap:Map[String,String]) = {
-    println(deviceMap)
     val NOW = this.getNOW()
     //查找条件优先级 ip->idfa->caid1->caid2
     val sqls = Map(
-      "ip" -> "SELECT  * FROM log_ios_click_data WHERE external_ip=?",
+      "external_ip" -> "SELECT  * FROM log_ios_click_data WHERE external_ip=?",
       "idfa" -> "SELECT  * FROM log_ios_click_data WHERE idfa_md5=?"
+      //"caid1"-> "SELECT  * FROM log_ios_click_data WHERE CAID1=?",
+      //"caid2"-> "SELECT  * FROM log_ios_click_data WHERE CAID2=?"
     )
     ////////////////新设备
     val advAscribeInfo: mutable.Map[String, String] = mutable.Map[String, String](deviceMap.toSeq: _*) //immutable.map 转 mutable.map
@@ -473,8 +477,8 @@ object sparkSteamReConsitution {
       for ((k, sql) <- sqls) {
         val prep = connection.prepareStatement(sql)
         k match {
-          case "ip" => prep.setString(1, deviceMap("ip"))
-          case "oaid" => prep.setString(1, deviceMap("oaid"))
+          case "external_ip" => prep.setString(1, deviceMap("external_ip"))
+          case "idfa" => prep.setString(1, deviceMap("idfa"))
         }
         val res = prep.executeQuery
         //广告归因信息
@@ -487,12 +491,12 @@ object sparkSteamReConsitution {
       }
     }
     //写入激活表
-    val insertActiveSql = "INSERT INTO log_android_active(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, plan_id, channel_id, active_time) VALUES(?,?,?,?,?,?,?,?,?)"
-    JDBCutil.executeUpdate(connection, insertActiveSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
+    val insertActiveSql = "INSERT INTO log_ios_active(appid, uuid_md5, idfa_md5, model, ip, external_ip, plan_id, channel_id, active_time) VALUES(?,?,?,?,?,?,?,?,?)"
+    JDBCutil.executeUpdate(connection, insertActiveSql, Array(advAscribeInfo("appid"), advAscribeInfo("uuid"), advAscribeInfo("idfa"), advAscribeInfo("model"), advAscribeInfo("ip"), advAscribeInfo("external_ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
 
     //写入启动表
-    val launchLogSql = "INSERT INTO log_android_launch(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
-    JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
+    val launchLogSql = "INSERT INTO log_ios_launch(appid, uuid_md5, idfa_md5, model, ip, external_ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
+    JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("uuid"), advAscribeInfo("idfa"), advAscribeInfo("model"), advAscribeInfo("ip"), advAscribeInfo("external_ip"),advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
     connection.close()
 
     //写入Redis  key:appid-oaid  value:部分设备信息的json字符串
@@ -555,7 +559,7 @@ object sparkSteamReConsitution {
   }
 
 
-  private def handleOldLaunchiOS(deviceMap: Map[String, String],infoStorageMap:Map[String,String]): Unit = {
+  private def handleOldLaunchiOS(deviceMap: Map[String, String],infoStorageMap:Map[String,String]) = {
     val NOW = this.getNOW()
     ////////////////////旧设备
     val advAscribeInfo =  deviceMap + ("plan_id" -> infoStorageMap("planid"), "channel_id" -> infoStorageMap("channelid"))
@@ -563,8 +567,8 @@ object sparkSteamReConsitution {
     //val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
     val connection: Connection = JDBCutil.getConnection
     //写入启动表
-    val launchLogSql = "INSERT INTO log_ios_launch(appid, uuid_md5, idfa_md5, androidid_md5, ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
-    JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
+    val launchLogSql = "INSERT INTO log_ios_launch(appid, uuid_md5, idfa_md5, model, ip, external_ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
+    JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("uuid"), advAscribeInfo("idfa"), advAscribeInfo("model"), advAscribeInfo("ip"), advAscribeInfo("external_ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
     connection.close()
     //写入redis  key:appid-oaid  value:json
     val partialDeviceInfoJson =
@@ -586,11 +590,17 @@ object sparkSteamReConsitution {
   }
 
 
-
   /**
-   * 处理 launch 通道旧设备的逻辑
+   * 处理 reg 通道旧设备的逻辑
    */
-  private def handleOldRegConsumerRecord(deviceMap: Map[String, String], infoStorageMap: Map[String, String]) = {
+  private def handleOldReg(deviceMap: Map[String, String], infoStorageMap: Map[String, String]) = {
+    deviceMap("os").toInt match {
+      case 1 => this.handleOldRegAndroid(deviceMap, infoStorageMap)
+      case 2 => this.handleOldRegiOS(deviceMap, infoStorageMap)
+    }
+  }
+
+  private def handleOldRegAndroid(deviceMap: Map[String, String], infoStorageMap: Map[String, String]): Unit = {
     val NOW = this.getNOW()
     ////////////////////旧设备
     val advAscribeInfo: mutable.Map[String, String] = mutable.Map[String, String](deviceMap.toSeq: _*)
@@ -610,6 +620,30 @@ object sparkSteamReConsitution {
       "new" -> 0
     )
   }
+
+  private def handleOldRegiOS(deviceMap: Map[String, String], infoStorageMap: Map[String, String]) = {
+    val NOW = this.getNOW()
+    ////////////////////旧设备
+    val advAscribeInfo: mutable.Map[String, String] = mutable.Map[String, String](deviceMap.toSeq: _*)
+    advAscribeInfo += ("plan_id" -> infoStorageMap("planid"), "channel_id" -> infoStorageMap("channelid"))
+    //val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
+    val connection: Connection = JDBCutil.getConnection
+    //写入注册设备表
+    val launchLogSql = "INSERT INTO log_ios_reg(appid, uuid_md5, idfa_md5, model, ip, external_ip, plan_id, channel_id, reg_time) VALUES(?,?,?,?,?,?,?,?,?)"
+    JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("uuid"), advAscribeInfo("idfa"), advAscribeInfo("model"), advAscribeInfo("ip"), advAscribeInfo("external_ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
+    connection.close()
+    Map(
+      "appid" -> advAscribeInfo("appid"),
+      "activetime" -> infoStorageMap("activetime"),
+      "launchtime" -> infoStorageMap("launchtime"),
+      "planid" -> advAscribeInfo("plan_id"),
+      "channelid" -> advAscribeInfo("channel_id"),
+      "new" -> 0
+    )
+  }
+
+
+
 
   /**
    * 处理 pay 通道新设备的逻辑
@@ -672,11 +706,19 @@ object sparkSteamReConsitution {
    * 处理 pay 通道旧设备的逻辑
    * TODO 计划信息应该直接在Redis中读取 不再从数据库中读取
    */
-  private def handleOldPayConsumerRecord(deviceMap:Map[String,String],infoStorageMap:Map[String,String]) = {
+  private def handleOldPay(deviceMap:Map[String,String],infoStorageMap:Map[String,String]) = {
+    deviceMap("os").toInt match {
+      case 1 => this.handleOldPayAndroid(deviceMap, infoStorageMap)
+      case 2 => this.handleOldPayiOS(deviceMap, infoStorageMap)
+    }
+  }
+
+
+  private def handleOldPayAndroid(deviceMap: Map[String, String], infoStorageMap: Map[String, String]) = {
     val NOW = this.getNOW()
     ////////////////////旧设备
-    val advAscribeInfo:mutable.Map[String,String] = mutable.Map[String,String](deviceMap.toSeq:_*)  //immutable 转 mutable
-    advAscribeInfo += ("plan_id"->infoStorageMap("planid"),"channel_id"->infoStorageMap("channelid"))
+    val advAscribeInfo: mutable.Map[String, String] = mutable.Map[String, String](deviceMap.toSeq: _*) //immutable 转 mutable
+    advAscribeInfo += ("plan_id" -> infoStorageMap("planid"), "channel_id" -> infoStorageMap("channelid"))
     val connection: Connection = JDBCutil.getConnection
 
     //写入付费日志表
@@ -693,6 +735,31 @@ object sparkSteamReConsitution {
       "amount" -> advAscribeInfo("amount")
     )
   }
+
+
+  private def handleOldPayiOS(deviceMap: Map[String, String], infoStorageMap: Map[String, String]) = {
+    val NOW = this.getNOW()
+    ////////////////////旧设备
+    val advAscribeInfo: mutable.Map[String, String] = mutable.Map[String, String](deviceMap.toSeq: _*) //immutable 转 mutable
+    advAscribeInfo += ("plan_id" -> infoStorageMap("planid"), "channel_id" -> infoStorageMap("channelid"))
+    val connection: Connection = JDBCutil.getConnection
+
+    //写入付费日志表
+    val payLogSql = "INSERT INTO log_ios_pay(appid, uuid_md5, idfa_md5, model, ip, external_ip, plan_id, channel_id, pay_time, pay_amount) VALUES(?,?,?,?,?,?,?,?,?,?)"
+    JDBCutil.executeUpdate(connection, payLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("uuid"), advAscribeInfo("idfa"), advAscribeInfo("model"), advAscribeInfo("ip"), advAscribeInfo("external_ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW, advAscribeInfo("amount")))
+    connection.close()
+    Map(
+      "appid" -> advAscribeInfo("appid"),
+      "activetime" -> infoStorageMap("activetime"),
+      "launchtime" -> infoStorageMap("launchtime"),
+      "planid" -> advAscribeInfo("plan_id"),
+      "channelid" -> advAscribeInfo("channel_id"),
+      "new" -> 0,
+      "amount" -> advAscribeInfo("amount")
+    )
+  }
+
+
 
   /**
    * launch通道 基础和留存数据的统计
