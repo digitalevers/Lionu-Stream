@@ -185,14 +185,14 @@ object sparkSteamReConsitution {
           //旧设备
           //println(infoStorage)
           val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String, String]]
-          advAscribeInfo = handleOldLaunchConsumerRecord(deviceOriginMap, infoStorageMap)
+          advAscribeInfo = handleOldLaunch(deviceOriginMap, infoStorageMap)
         }
       } else {
         //旧设备 传入redis的数据 写launch表不需要再查询
         //val infoObject = JsonParser(infoStorage).convertTo[redisDeviceInfo]
         //println(infoStorage)
         val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String,String]]
-        advAscribeInfo = handleOldLaunchConsumerRecord(deviceOriginMap,infoStorageMap)
+        advAscribeInfo = handleOldLaunch(deviceOriginMap,infoStorageMap)
       }
       //println("launch-"+advAscribeInfo)
       advAscribeInfo
@@ -379,16 +379,15 @@ object sparkSteamReConsitution {
    */
   private def handleNewLaunch(deviceMap:Map[String,String]) = {
     deviceMap("os").toInt match {
-      case 1 => this.newAndroidLaunch(deviceMap)
-      case 2 => this.newiOSLaunch(deviceMap)
+      case 1 => this.handleNewLaunchAndroid(deviceMap)
+      case 2 => this.handleNewLaunchiOS(deviceMap)
     }
   }
-
 
   /**
    * 处理新的Android设备激活
    */
-  private def newAndroidLaunch(deviceMap:Map[String,String]) = {
+  private def handleNewLaunchAndroid(deviceMap:Map[String,String]) = {
     val NOW = this.getNOW()
     //查找条件优先级 imei->oaid->android_id->mac->ip
     val sqls = mutable.LinkedHashMap[String, String](
@@ -455,13 +454,13 @@ object sparkSteamReConsitution {
    * 处理新的iOS设备激活
    * @param deviceMap
    */
-  private def newiOSLaunch(deviceMap:Map[String,String]) = {
+  private def handleNewLaunchiOS(deviceMap:Map[String,String]) = {
     println(deviceMap)
     val NOW = this.getNOW()
     //查找条件优先级 ip->idfa->caid1->caid2
     val sqls = Map(
       "ip" -> "SELECT  * FROM log_ios_click_data WHERE external_ip=?",
-      "oaid" -> "SELECT  * FROM log_android_click_data WHERE oaid=?"
+      "idfa" -> "SELECT  * FROM log_ios_click_data WHERE idfa_md5=?"
     )
     ////////////////新设备
     val advAscribeInfo: mutable.Map[String, String] = mutable.Map[String, String](deviceMap.toSeq: _*) //immutable.map 转 mutable.map
@@ -474,11 +473,8 @@ object sparkSteamReConsitution {
       for ((k, sql) <- sqls) {
         val prep = connection.prepareStatement(sql)
         k match {
-          case "imei" => prep.setString(1, deviceMap("imei"))
-          case "oaid" => prep.setString(1, deviceMap("oaid"))
-          case "androidid" => prep.setString(1, deviceMap("androidid"))
-          case "mac" => prep.setString(1, deviceMap("mac"))
           case "ip" => prep.setString(1, deviceMap("ip"))
+          case "oaid" => prep.setString(1, deviceMap("oaid"))
         }
         val res = prep.executeQuery
         //广告归因信息
@@ -520,11 +516,19 @@ object sparkSteamReConsitution {
   /**
    * 处理 launch 通道旧设备的逻辑
    */
-  private def handleOldLaunchConsumerRecord(deviceMap:Map[String,String],infoStorageMap:Map[String,String]) = {
+  private def handleOldLaunch(deviceMap:Map[String,String],infoStorageMap:Map[String,String]) = {
+    deviceMap("os").toInt match {
+      case 1 => this.handleOldLaunchAndroid(deviceMap,infoStorageMap)
+      case 2 => this.handleOldLaunchiOS(deviceMap,infoStorageMap)
+    }
+  }
+
+
+  private def handleOldLaunchAndroid(deviceMap:Map[String,String],infoStorageMap:Map[String,String]) = {
     val NOW = this.getNOW()
     ////////////////////旧设备
-    val advAscribeInfo:mutable.Map[String,String] = mutable.Map[String,String](deviceMap.toSeq:_*)
-    advAscribeInfo += ("plan_id"->infoStorageMap("planid"),"channel_id"->infoStorageMap("channelid"))
+    val advAscribeInfo: mutable.Map[String, String] = mutable.Map[String, String](deviceMap.toSeq: _*)
+    advAscribeInfo += ("plan_id" -> infoStorageMap("planid"), "channel_id" -> infoStorageMap("channelid"))
     //val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
     val connection: Connection = JDBCutil.getConnection
     //写入启动表
@@ -536,10 +540,10 @@ object sparkSteamReConsitution {
       s"""{"activetime":"${infoStorageMap("activetime")}","launchtime":"${NOW}","planid":"${advAscribeInfo("plan_id")}","channelid":"${advAscribeInfo("channel_id")}"}"""
     //println(partialDeviceInfoJson)
     var redisRes = redisUtil.set(advAscribeInfo("appid") + '-' + deviceMap("oaid"), partialDeviceInfoJson)
-    if(redisRes == true){
+    if (redisRes == true) {
       Map(
         "appid" -> advAscribeInfo("appid"),
-        "activetime" -> infoStorageMap("activetime"),
+        "activetime" -> infoStorageMap("activetime"), //设备首次激活时间
         "launchtime" -> infoStorageMap("launchtime"), //最近上一次的设备启动时间
         "planid" -> advAscribeInfo("plan_id"),
         "channelid" -> advAscribeInfo("channel_id"),
@@ -549,6 +553,38 @@ object sparkSteamReConsitution {
       throw new Exception("写入redis失败")
     }
   }
+
+
+  private def handleOldLaunchiOS(deviceMap: Map[String, String],infoStorageMap:Map[String,String]): Unit = {
+    val NOW = this.getNOW()
+    ////////////////////旧设备
+    val advAscribeInfo =  deviceMap + ("plan_id" -> infoStorageMap("planid"), "channel_id" -> infoStorageMap("channelid"))
+    //advAscribeInfo += ("plan_id" -> infoStorageMap("planid"), "channel_id" -> infoStorageMap("channelid"))
+    //val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
+    val connection: Connection = JDBCutil.getConnection
+    //写入启动表
+    val launchLogSql = "INSERT INTO log_ios_launch(appid, uuid_md5, idfa_md5, androidid_md5, ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
+    JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
+    connection.close()
+    //写入redis  key:appid-oaid  value:json
+    val partialDeviceInfoJson =
+      s"""{"activetime":"${infoStorageMap("activetime")}","launchtime":"${NOW}","planid":"${advAscribeInfo("plan_id")}","channelid":"${advAscribeInfo("channel_id")}"}"""
+    //println(partialDeviceInfoJson)
+    var redisRes = redisUtil.set(advAscribeInfo("appid") + '-' + deviceMap("oaid"), partialDeviceInfoJson)
+    if (redisRes == true) {
+      Map(
+        "appid" -> advAscribeInfo("appid"),
+        "activetime" -> infoStorageMap("activetime"), //设备首次激活时间
+        "launchtime" -> infoStorageMap("launchtime"), //最近上一次的设备启动时间
+        "planid" -> advAscribeInfo("plan_id"),
+        "channelid" -> advAscribeInfo("channel_id"),
+        "new" -> 0
+      )
+    } else {
+      throw new Exception("写入redis失败")
+    }
+  }
+
 
 
   /**
