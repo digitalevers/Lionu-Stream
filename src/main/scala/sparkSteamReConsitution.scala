@@ -254,7 +254,8 @@ object sparkSteamReConsitution {
         infoStorage =  isNewDeviceInMySQL(deviceOriginMap)
         if(infoStorage == null){
           //新设备
-          advAscribeInfo = handleNewPayConsumerRecord(deviceOriginMap)
+          //advAscribeInfo = handleNewPayConsumerRecord(deviceOriginMap)
+          throw new Exception("付费通道：没有找到存储的激活消息")
         } else {
           //旧设备
           val infoStorageMap = JsonParser(infoStorage).convertTo[Map[String, String]]
@@ -579,7 +580,7 @@ object sparkSteamReConsitution {
    * 实际生产中 这段逻辑被调用的概率应该很低
    * 因为正常来说 launch 通道的数据肯定会较 pay 通道的数据先得到处理
    */
-  private def handleNewPayConsumerRecord(deviceMap:Map[String,String]) = {
+  /*private def handleNewPayConsumerRecord(deviceMap:Map[String,String]) = {
     val NOW = this.getNOW()
     //查找条件优先级 imei->oaid->android_id->mac->ip
     val sqls = mutable.LinkedHashMap[String,String](
@@ -629,7 +630,7 @@ object sparkSteamReConsitution {
       "new" -> 1,
       "amount"->advAscribeInfo("amount")
     )
-  }
+  }*/
 
   /**
    * 处理 pay 通道旧设备的逻辑

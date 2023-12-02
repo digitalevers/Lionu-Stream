@@ -13,23 +13,17 @@ object JDBCutil {
   //初始化连接池方法
   def init(): DataSource = {
     //读取配置文件
-//    val prop = new Properties();
-//    // 使用ClassLoader加载properties配置文件生成对应的输入流
-//    val in = JDBCutil.getClass.getClassLoader().getResourceAsStream("application.properties")
-//    println(in)
-//    // 使用properties对象加载输入流
-//    prop.load(in)
+    val prop = new Properties();
+    // 使用ClassLoader加载properties配置文件生成对应的输入流
+    val in = JDBCutil.getClass.getClassLoader().getResourceAsStream("application.properties")
+    // 使用properties对象加载输入流
+    prop.load(in)
 
     val properties = new Properties()
-//    properties.setProperty("driverClassName", "com.mysql.cj.jdbc.Driver")
-//    properties.setProperty("url", prop.getProperty("mysql.url"))
-//    properties.setProperty("username", prop.getProperty("mysql.user"))
-//    properties.setProperty("password", prop.getProperty("mysql.password"))
-//    properties.setProperty("maxActive", "50")
-    properties.setProperty("driverClassName", "com.mysql.cj.jdbc.Driver")
-    properties.setProperty("url", "jdbc:mysql://39.98.78.200:3306/lionu")
-    properties.setProperty("username", "root")
-    properties.setProperty("password", "123456")
+    properties.setProperty("driverClassName", prop.getProperty("mysql.drive"))
+    properties.setProperty("url", prop.getProperty("mysql.url"))
+    properties.setProperty("username", prop.getProperty("mysql.user"))
+    properties.setProperty("password", prop.getProperty("mysql.password"))
     properties.setProperty("maxActive", "50")
 
     DruidDataSourceFactory.createDataSource(properties)
