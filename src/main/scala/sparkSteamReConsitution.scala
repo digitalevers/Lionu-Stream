@@ -40,6 +40,7 @@ case class launchDeviceInfo(
                            channel:String,
                            imei:String,
                            ip:String,
+                           externalip:String,
                            mac:String,
                            model:String,
                            oaid:String,
@@ -58,6 +59,7 @@ case class regDeviceInfo(
                           channel:String,
                           imei:String,
                           ip:String,
+                          externalip:String,
                           mac:String,
                           model:String,
                           oaid:String,
@@ -77,6 +79,7 @@ case class payDeviceInfo(
                           channel:String,
                           imei:String,
                           ip:String,
+                          externalip:String,
                           mac:String,
                           model:String,
                           oaid:String,
@@ -92,9 +95,9 @@ case class payDeviceInfo(
 //定义解析协议
 object ResultJsonProtocol extends DefaultJsonProtocol {
   //implicit val redisDeviceInfoFormat = jsonFormat(redisDeviceInfo,"activetime","launchtime","planid","channedid")
-  implicit val launchDeviceInfoFormat = jsonFormat(launchDeviceInfo,"androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
-  implicit val regDeviceInfoFormat = jsonFormat(regDeviceInfo,"androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
-  implicit val payDeviceInfoFormat = jsonFormat(payDeviceInfo, "amount", "androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
+  implicit val launchDeviceInfoFormat = jsonFormat(launchDeviceInfo,"androidid", "appName", "appid","applicationId","channel","imei","ip","externalip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
+  implicit val regDeviceInfoFormat = jsonFormat(regDeviceInfo,"androidid", "appName", "appid","applicationId","channel","imei","ip","externalip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
+  implicit val payDeviceInfoFormat = jsonFormat(payDeviceInfo, "amount", "androidid", "appName", "appid","applicationId","channel","imei","ip","externalip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
 }
 
 import ResultJsonProtocol._
@@ -147,7 +150,7 @@ object sparkSteamReConsitution {
 
   def main(args: Array[String]): Unit = {
     val sparkConf  = new SparkConf().setMaster("local[*]").setAppName("sparkStream")
-    val streamingContext = new StreamingContext(sparkConf,Seconds(15))
+    val streamingContext = new StreamingContext(sparkConf,Seconds(5))
     //读取配置文件
     val prop = new Properties();
     // 使用ClassLoader加载properties配置文件生成对应的输入流
@@ -169,7 +172,7 @@ object sparkSteamReConsitution {
     kafkaDStreamForLaunch.map(x=>{
       //println(x.value)
       val deviceOriginMap  = getObjectProperties(JsonParser(x.value).convertTo[launchDeviceInfo])
-      println(deviceOriginMap)
+      //println(deviceOriginMap)
 
       var advAscribeInfo:Map[String,Any] = null                         //返回的归因信息
       var infoStorage = isNewDeviceInRedis(deviceOriginMap,prop)        //返回 Redis 中存放的json信息(激活时间，登录时间，计划id，渠道id)
@@ -395,7 +398,7 @@ object sparkSteamReConsitution {
       "oaid" -> "SELECT  * FROM log_android_click_data WHERE oaid=?",
       "androidid" -> "SELECT  * FROM log_android_click_data WHERE androidid_md5=?",
       "mac" -> "SELECT  * FROM log_android_click_data WHERE mac_md5=?",
-      "ip" -> "SELECT  * FROM log_android_click_data WHERE ip=?"
+      "externalip" -> "SELECT  * FROM log_android_click_data WHERE external_ip=?"
     )
     ////////////////新设备
     val advAscribeInfo: mutable.Map[String, String] = mutable.Map[String, String](deviceMap.toSeq: _*) //immutable.map 转 mutable.map
@@ -412,7 +415,7 @@ object sparkSteamReConsitution {
           case "oaid" => prep.setString(1, deviceMap("oaid"))
           case "androidid" => prep.setString(1, deviceMap("androidid"))
           case "mac" => prep.setString(1, deviceMap("mac"))
-          case "ip" => prep.setString(1, deviceMap("ip"))
+          case "externalip" => prep.setString(1, deviceMap("externalip"))
         }
         val res = prep.executeQuery
         //广告归因信息
@@ -425,12 +428,12 @@ object sparkSteamReConsitution {
       }
     }
     //写入激活表
-    val insertActiveSql = "INSERT INTO log_android_active(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, plan_id, channel_id, active_time) VALUES(?,?,?,?,?,?,?,?,?)"
-    JDBCutil.executeUpdate(connection, insertActiveSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
+    val insertActiveSql = "INSERT INTO log_android_active(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, external_ip, plan_id, channel_id, active_time) VALUES(?,?,?,?,?,?,?,?,?,?)"
+    JDBCutil.executeUpdate(connection, insertActiveSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("externalip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
 
     //写入启动表
-    val launchLogSql = "INSERT INTO log_android_launch(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
-    JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
+    val launchLogSql = "INSERT INTO log_android_launch(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, external_ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?,?)"
+    JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("externalip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
     connection.close()
 
     //写入Redis  key:appid-oaid  value:部分设备信息的json字符串
@@ -533,8 +536,8 @@ object sparkSteamReConsitution {
     //val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
     val connection: Connection = JDBCutil.getConnection
     //写入启动表
-    val launchLogSql = "INSERT INTO log_android_launch(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?)"
-    JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
+    val launchLogSql = "INSERT INTO log_android_launch(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, external_ip, plan_id, channel_id, launch_time) VALUES(?,?,?,?,?,?,?,?,?,?)"
+    JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("externalip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
     connection.close()
     //写入redis  key:appid-oaid  value:json
     val partialDeviceInfoJson =
@@ -605,8 +608,8 @@ object sparkSteamReConsitution {
     //val connection: Connection = DriverManager.getConnection(prop.getProperty("mysql.url"), prop.getProperty("mysql.user"), prop.getProperty("mysql.password"))
     val connection: Connection = JDBCutil.getConnection
     //写入注册设备表
-    val launchLogSql = "INSERT INTO log_android_reg(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, plan_id, channel_id, reg_time) VALUES(?,?,?,?,?,?,?,?,?)"
-    JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
+    val launchLogSql = "INSERT INTO log_android_reg(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, external_ip, plan_id, channel_id, reg_time) VALUES(?,?,?,?,?,?,?,?,?,?)"
+    JDBCutil.executeUpdate(connection, launchLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("externalip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW))
     connection.close()
     Map(
       "appid" -> advAscribeInfo("appid"),
@@ -719,8 +722,8 @@ object sparkSteamReConsitution {
     val connection: Connection = JDBCutil.getConnection
 
     //写入付费日志表
-    val payLogSql = "INSERT INTO log_android_pay(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, plan_id, channel_id, pay_time,pay_amount) VALUES(?,?,?,?,?,?,?,?,?,?)"
-    JDBCutil.executeUpdate(connection, payLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW, advAscribeInfo("amount")))
+    val payLogSql = "INSERT INTO log_android_pay(appid, imei_md5, oaid_md5, androidid_md5, mac_md5, ip, external_ip, plan_id, channel_id, pay_time,pay_amount) VALUES(?,?,?,?,?,?,?,?,?,?,?)"
+    JDBCutil.executeUpdate(connection, payLogSql, Array(advAscribeInfo("appid"), advAscribeInfo("imei"), advAscribeInfo("oaid"), advAscribeInfo("androidid"), advAscribeInfo("mac"), advAscribeInfo("ip"), advAscribeInfo("externalip"), advAscribeInfo("plan_id"), advAscribeInfo("channel_id"), NOW, advAscribeInfo("amount")))
     connection.close()
     Map(
       "appid" -> advAscribeInfo("appid"),
