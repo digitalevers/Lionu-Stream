@@ -33,7 +33,6 @@ import spray.json.{DefaultJsonProtocol, JsValue, JsonParser}
 //)
 
 case class launchDeviceInfo(
-                           action:String,
                            androidid:String,
                            appName:String,
                            appid:String,
@@ -52,7 +51,6 @@ case class launchDeviceInfo(
                            versionCode:Int,
                            versionName:String)
 case class regDeviceInfo(
-                          action:String,
                           androidid:String,
                           appName:String,
                           appid:String,
@@ -71,7 +69,6 @@ case class regDeviceInfo(
                           versionCode:Int,
                           versionName:String)
 case class payDeviceInfo(
-                          action:String,
                           amount:String,
                           androidid:String,
                           appName:String,
@@ -95,9 +92,9 @@ case class payDeviceInfo(
 //定义解析协议
 object ResultJsonProtocol extends DefaultJsonProtocol {
   //implicit val redisDeviceInfoFormat = jsonFormat(redisDeviceInfo,"activetime","launchtime","planid","channedid")
-  implicit val launchDeviceInfoFormat = jsonFormat(launchDeviceInfo,"action","androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
-  implicit val regDeviceInfoFormat = jsonFormat(regDeviceInfo,"action","androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
-  implicit val payDeviceInfoFormat = jsonFormat(payDeviceInfo,"action", "amount", "androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
+  implicit val launchDeviceInfoFormat = jsonFormat(launchDeviceInfo,"androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
+  implicit val regDeviceInfoFormat = jsonFormat(regDeviceInfo,"androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
+  implicit val payDeviceInfoFormat = jsonFormat(payDeviceInfo, "amount", "androidid", "appName", "appid","applicationId","channel","imei","ip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
 }
 
 import ResultJsonProtocol._
@@ -600,7 +597,7 @@ object sparkSteamReConsitution {
     }
   }
 
-  private def handleOldRegAndroid(deviceMap: Map[String, String], infoStorageMap: Map[String, String]): Unit = {
+  private def handleOldRegAndroid(deviceMap: Map[String, String], infoStorageMap: Map[String, String]) = {
     val NOW = this.getNOW()
     ////////////////////旧设备
     val advAscribeInfo: mutable.Map[String, String] = mutable.Map[String, String](deviceMap.toSeq: _*)
