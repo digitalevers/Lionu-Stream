@@ -170,9 +170,10 @@ object sparkSteamReConsitution {
     //println(launchKafkaParams)
     val kafkaDStreamForLaunch = KafkaUtils.createDirectStream(streamingContext,LocationStrategies.PreferConsistent,Subscribe[String,String](launchKafkaParams._1, launchKafkaParams._2))
     kafkaDStreamForLaunch.map(x=>{
-      //println(x.value)
+      println(x.value)
+      //val deviceOriginMap  = getObjectProperties(JsonParser(x.value).convertTo[launchDeviceInfo])
       val deviceOriginMap  = JsonParser(x.value).convertTo[Map[String,String]]
-      //println(deviceOriginMap)
+      println(deviceOriginMap)
 
       var advAscribeInfo:Map[String,Any] = null                         //返回的归因信息
       var infoStorage = isNewDeviceInRedis(deviceOriginMap,prop)        //返回 Redis 中存放的json信息(激活时间，登录时间，计划id，渠道id)
