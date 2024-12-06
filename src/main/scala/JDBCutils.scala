@@ -1,10 +1,10 @@
 import com.alibaba.druid.pool.DruidDataSourceFactory
 
-import java.sql.{Connection, PreparedStatement, ResultSet}
+import java.sql.{Connection, PreparedStatement, ResultSet, SQLException}
 import java.util.Properties
 import javax.sql.DataSource
-import collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
+import org.slf4j.LoggerFactory
 
 object JDBCutil {
   //初始化连接池
@@ -36,23 +36,26 @@ object JDBCutil {
 
   //执行SQL语句，单条数据插入
   def executeUpdate(connection: Connection, sql: String, params: Array[Any]): Int = {
-    var rtn = 0
-    var pstmt: PreparedStatement = null
+    val logger = LoggerFactory.getLogger(this.getClass)
     try {
       connection.setAutoCommit(false)
-      pstmt = connection.prepareStatement(sql)
-      if (params != null && params.length > 0) {
-        for (i <- params.indices) {
-          pstmt.setObject(i + 1, params(i))
-        }
-      }
-      rtn = pstmt.executeUpdate()
+      val pstmt = connection.prepareStatement(sql)
+      params.zipWithIndex.foreach { case (param, i) => pstmt.setObject(i + 1, param) }
+      val rtn = pstmt.executeUpdate()
       connection.commit()
-      pstmt.close()
+      rtn
     } catch {
-      case e: Exception => e.printStackTrace()
+      case e: SQLException =>
+        logger.error("SQL Exception occurred", e)
+        connection.rollback() // 回滚事务
+        0
+      case e: Exception =>
+        logger.error("Exception occurred", e)
+        connection.rollback() // 回滚事务
+        0
+    } finally {
+      connection.setAutoCommit(true) // 恢复自动提交
     }
-    rtn
   }
 
   /**

@@ -16,11 +16,8 @@ import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.{Date, Properties}
 import scala.collection.mutable
-import scala.util.Try
-import scala.util.control.Breaks._
-import spray.json.{DefaultJsonProtocol, JsValue, JsonParser}
-
-
+import util.control.Breaks._
+import spray.json.{DefaultJsonProtocol, JsValue, JsonParser, RootJsonFormat}
 
 
 //定义对应json的实体类
@@ -95,9 +92,9 @@ case class payDeviceInfo(
 //定义解析协议
 object ResultJsonProtocol extends DefaultJsonProtocol {
   //implicit val redisDeviceInfoFormat = jsonFormat(redisDeviceInfo,"activetime","launchtime","planid","channedid")
-  implicit val launchDeviceInfoFormat = jsonFormat(launchDeviceInfo,"androidid", "appName", "appid","applicationId","channel","imei","ip","externalip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
-  implicit val regDeviceInfoFormat = jsonFormat(regDeviceInfo,"androidid", "appName", "appid","applicationId","channel","imei","ip","externalip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
-  implicit val payDeviceInfoFormat = jsonFormat(payDeviceInfo, "amount", "androidid", "appName", "appid","applicationId","channel","imei","ip","externalip","mac","model","oaid","os","planid","sys","time","ua","versionCode","versionName")
+  implicit val launchDeviceInfoFormat: RootJsonFormat[launchDeviceInfo] = jsonFormat(launchDeviceInfo, "androidid", "appName", "appid", "applicationId", "channel", "imei", "ip", "externalip", "mac", "model", "oaid", "os", "planid", "sys", "time", "ua", "versionCode", "versionName")
+  implicit val regDeviceInfoFormat: RootJsonFormat[regDeviceInfo] = jsonFormat(regDeviceInfo, "androidid", "appName", "appid", "applicationId", "channel", "imei", "ip", "externalip", "mac", "model", "oaid", "os", "planid", "sys", "time", "ua", "versionCode", "versionName")
+  implicit val payDeviceInfoFormat: RootJsonFormat[payDeviceInfo] = jsonFormat(payDeviceInfo, "amount", "androidid", "appName", "appid", "applicationId", "channel", "imei", "ip", "externalip", "mac", "model", "oaid", "os", "planid", "sys", "time", "ua", "versionCode", "versionName")
 }
 
 import ResultJsonProtocol._
