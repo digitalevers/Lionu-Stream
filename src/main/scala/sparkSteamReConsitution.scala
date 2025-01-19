@@ -147,7 +147,7 @@ object sparkSteamReConsitution {
 
   def main(args: Array[String]): Unit = {
     val sparkConf  = new SparkConf().setMaster("local[*]").setAppName("sparkStream")
-    val streamingContext = new StreamingContext(sparkConf,Seconds(5))
+    val streamingContext = new StreamingContext(sparkConf,Seconds(5)) //spark3.4弃用
     //读取配置文件
     val prop = new Properties();
     // 使用ClassLoader加载properties配置文件生成对应的输入流
