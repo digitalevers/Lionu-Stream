@@ -11,7 +11,7 @@ object sparkStreamSession {
     import spark.implicits._
 
     // 从 Kafka 读取数据
-    val kafkaDF = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "118.250.182.121:9092").option("subscribe", "test-topic").load()
+    val kafkaDF = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "192.168.2.108:9092").option("subscribe", "test-topic").load()
     // 解析 Kafka 数据
     val parsedDF = kafkaDF.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
     // 进行简单的流处理，例如计算每个单词的出现次数
