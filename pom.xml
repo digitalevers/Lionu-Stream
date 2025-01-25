@@ -43,5 +43,10 @@
             <artifactId>spark-sql-kafka-0-10_${scalaVersion}</artifactId>
             <version>${sparkVersion}</version>
         </dependency>
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>5.2.0</version>
+        </dependency>
     </dependencies>
 </project>

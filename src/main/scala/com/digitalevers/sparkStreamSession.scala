@@ -1,24 +1,47 @@
 package com.digitalevers
 
 //导入依赖包 spark-sql
-import org.apache.spark.sql.{ForeachWriter, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.streaming.StreamingQuery
+import org.apache.spark.sql.streaming.Trigger
+import org.apache.spark.sql.types.{MapType, StringType}
 
 object sparkStreamSession {
   def main(args: Array[String]): Unit = {
-    val spark = SparkSession.builder.appName("KafkaStreamingExample").master("local[*]").getOrCreate()  // 使用本地模式运行
+    val spark = SparkSession.builder.appName("KafkaStream").master("local[*]").getOrCreate()  // 使用本地模式运行
     import spark.implicits._
 
+    // Kafka 参数
+    val kafkaParams = Map[String, String](
+      "kafka.bootstrap.servers" -> "localhost:9092",  // Kafka 服务器地址
+      "subscribe" -> "launch"                         // 订阅的主题
+    )
     // 从 Kafka 读取数据
-    val kafkaDF = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "118.250.182.121:9092").option("subscribe", "test-topic").load()
+    val kafkaDF = spark.readStream.format("kafka").options(kafkaParams).load()
     // 解析 Kafka 数据
-    val parsedDF = kafkaDF.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
+/*    val parsedDF = kafkaDF.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
     // 进行简单的流处理，例如计算每个单词的出现次数
     val wordsDF = parsedDF.select(explode(split($"value", " ")) as "word")
-    val wordCountsDF = wordsDF.groupBy("word").count()
+    val wordCountsDF = wordsDF.groupBy("word").count()*/
+
+    // 解析 JSON 字符串为 Map[String, Any]
+    val parsedDf = kafkaDF.selectExpr("CAST(value AS STRING) as json")
+      .withColumn("parsed_json", from_json($"json", MapType(StringType, StringType)))
+      .select("parsed_json.*")
+
+    // 处理每一批次的数据
+    val query = parsedDf.writeStream.outputMode("append").foreachBatch { (batchDF: DataFrame, batchId: Long) =>
+        batchDF.foreach { row =>
+          val map = row.getValuesMap[String](row.schema.fieldNames)
+          println(s"Decoded Map: $map")
+          // 在这里可以对 map 进行进一步处理
+        }
+      }
+      .trigger(Trigger.ProcessingTime("5 seconds"))
+      .start()
+
     // 输出结果到控制台
-    val query = wordCountsDF.writeStream.outputMode("complete").format("console").start()
+    //val query = wordCountsDF.writeStream.outputMode("complete").format("console").start()
     query.awaitTermination()
   }
 
