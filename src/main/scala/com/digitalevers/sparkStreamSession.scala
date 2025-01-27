@@ -1,41 +1,49 @@
 package com.digitalevers
 
 //导入依赖包 spark-sql
+import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.streaming.Trigger
-import org.apache.spark.sql.types.{MapType, StringType}
+import org.apache.spark.sql.types.{MapType, StringType, StructType, IntegerType}
+
+import java.util.Properties
 
 object sparkStreamSession {
   def main(args: Array[String]): Unit = {
     val spark = SparkSession.builder.appName("KafkaStream").master("local[*]").getOrCreate()  // 使用本地模式运行
     import spark.implicits._
-
-    // Kafka 参数
-    val kafkaParams = Map[String, String](
-      "kafka.bootstrap.servers" -> "localhost:9092",  // Kafka 服务器地址
-      "subscribe" -> "launch"                         // 订阅的主题
-    )
+    //读取配置文件
+    val prop = new Properties();
+    val in = sparkStreamSession.getClass.getClassLoader.getResourceAsStream("application.properties");
+    prop.load(in)
+    // 1.激活topic
+    val launchKafkaParams = this.getKafkaParams(prop,"launch")
     // 从 Kafka 读取数据
-    val kafkaDF = spark.readStream.format("kafka").options(kafkaParams).load()
-    // 解析 Kafka 数据
-/*    val parsedDF = kafkaDF.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
-    // 进行简单的流处理，例如计算每个单词的出现次数
-    val wordsDF = parsedDF.select(explode(split($"value", " ")) as "word")
-    val wordCountsDF = wordsDF.groupBy("word").count()*/
+    val kafkaDF = spark.readStream.format("kafka").options(launchKafkaParams).load()
+    // 定义JSON Schema
+    val jsonSchema = new StructType()
+      .add("name", StringType)
+      .add("age", IntegerType)
+      .add("city", StringType)
 
-    // 解析 JSON 字符串为 Map[String, Any]
-    val parsedDf = kafkaDF.selectExpr("CAST(value AS STRING) as json")
-      .withColumn("parsed_json", from_json($"json", MapType(StringType, StringType)))
-      .select("parsed_json.*")
+    // 解析JSON数据为 StructType
+    val parsedDF = kafkaDF.selectExpr("CAST(value AS STRING) AS json").select(from_json(col("json"), jsonSchema).as("parsed_json"))
+    val mapDF = parsedDF.select(
+      from_json(
+        to_json(parsedDF("parsed_json")),
+        MapType(StringType, StringType)
+      ).as("json_map")
+    )
 
     // 处理每一批次的数据
-    val query = parsedDf.writeStream.outputMode("append").foreachBatch { (batchDF: DataFrame, batchId: Long) =>
-        batchDF.foreach { row =>
+    val query = mapDF.writeStream.outputMode("append").foreachBatch { (batchDF: DataFrame, batchId: Long) =>
+        /*batchDF.foreach { row =>
           val map = row.getValuesMap[String](row.schema.fieldNames)
           println(s"Decoded Map: $map")
           // 在这里可以对 map 进行进一步处理
-        }
+        }*/
+        batchDF.show(false)
       }
       .trigger(Trigger.ProcessingTime("5 seconds"))
       .start()
@@ -43,6 +51,16 @@ object sparkStreamSession {
     // 输出结果到控制台
     //val query = wordCountsDF.writeStream.outputMode("complete").format("console").start()
     query.awaitTermination()
+  }
+
+  private def getKafkaParams(_prop:Properties, _topic:String) = {
+    val _map =  Map[String, String](
+      "kafka.bootstrap.servers" -> _prop.getProperty("kafkaParams.bootstrap.servers"),
+      //"key.deserializer" -> classOf[StringDeserializer],
+      //"value.deserializer" -> classOf[StringDeserializer],
+      "subscribe" -> _topic
+    )
+    _map
   }
 
 //  def main(args: Array[String]): Unit = {
