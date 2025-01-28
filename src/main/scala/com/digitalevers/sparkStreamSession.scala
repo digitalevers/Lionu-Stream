@@ -1,7 +1,6 @@
 package com.digitalevers
 
 //导入依赖包 spark-sql
-import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.streaming.Trigger
@@ -29,24 +28,22 @@ object sparkStreamSession {
 
     // 解析JSON数据为 StructType
     val parsedDF = kafkaDF.selectExpr("CAST(value AS STRING) AS json").select(from_json(col("json"), jsonSchema).as("parsed_json"))
-    val mapDF = parsedDF.select(
-      from_json(
-        to_json(parsedDF("parsed_json")),
-        MapType(StringType, StringType)
-      ).as("json_map")
-    )
 
     // 处理每一批次的数据
-    val query = mapDF.writeStream.outputMode("append").foreachBatch { (batchDF: DataFrame, batchId: Long) =>
-        /*batchDF.foreach { row =>
-          val map = row.getValuesMap[String](row.schema.fieldNames)
-          println(s"Decoded Map: $map")
-          // 在这里可以对 map 进行进一步处理
-        }*/
-        batchDF.show(false)
-      }
-      .trigger(Trigger.ProcessingTime("5 seconds"))
-      .start()
+    val query = parsedDF.writeStream.outputMode("append").foreachBatch { (batchDF: DataFrame, batchId: Long) =>
+        batchDF.foreach { row =>
+          val parsedJson = row.getAs[org.apache.spark.sql.Row]("parsed_json")
+          if (parsedJson != null) {
+            val map = parsedJson.getValuesMap[String](parsedJson.schema.fieldNames)
+            println(s"Decoded Map: $map")
+            // 在这里可以对 map 进行进一步处理
+          } else {
+            println("Failed to parse JSON: " + row.getAs[String]("json"))
+          }
+        }
+      }.trigger(Trigger.ProcessingTime("5 seconds")).start()
+
+
 
     // 输出结果到控制台
     //val query = wordCountsDF.writeStream.outputMode("complete").format("console").start()
