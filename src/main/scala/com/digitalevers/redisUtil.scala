@@ -35,8 +35,6 @@ object redisUtil {
   def closePool(): Unit = jedisPool.close()
 }
 
-
-
 object RedisExample {
   def main(args: Array[String]): Unit = {
     // 从连接池中获取一个Jedis实例
