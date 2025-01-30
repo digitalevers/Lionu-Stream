@@ -13,13 +13,12 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 object sparkStreamSession {
   def main(args: Array[String]): Unit = {
     val spark = SparkSession.builder.appName("KafkaStream").master("local[*]").getOrCreate()  // 使用本地模式运行
-    import spark.implicits._
     //读取配置文件
     val prop = new Properties();
     val in = sparkStreamSession.getClass.getClassLoader.getResourceAsStream("application.properties");
     prop.load(in)
-    // 1.激活topic
-    val launchKafkaParams = this.getKafkaParams(prop,"launch")
+    // 监听多个 kafka topics
+    val launchKafkaParams = this.getKafkaParams(prop,"launch,reg,pay")
     // 从 Kafka 读取数据
     val kafkaDF = spark.readStream.format("kafka").options(launchKafkaParams).load()
     val parsedDF = kafkaDF.selectExpr("CAST(value AS STRING) as jsonString")
@@ -33,7 +32,7 @@ object sparkStreamSession {
             //提取row中的字符串
             val jsonString = row.getAs[String]("jsonString")
             val map: Map[String, Any] = mapper.readValue(jsonString, classOf[Map[String, Any]])
-            println(map)
+            //println(map)
           } catch {
             case e: Exception => println(s"Error decoding JSON: ${e.getMessage}")
           }
